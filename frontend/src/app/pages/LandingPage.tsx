@@ -12,12 +12,7 @@ export default function LandingPage() {
   const navigate = useNavigate();
   const [isGuideOpen, setIsGuideOpen] = useState(false);
 
-  // If user is already logged in, take them to the dashboard automatically
-  useEffect(() => {
-    if (user) {
-      navigate('/dashboard', { replace: true });
-    }
-  }, [user, navigate]);
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-sky-50 to-white font-sans text-slate-800 overflow-x-hidden relative">

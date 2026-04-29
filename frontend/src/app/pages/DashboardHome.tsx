@@ -92,7 +92,7 @@ export default function DashboardHome() {
       <div className="bg-[#1e293b]/90 backdrop-blur-xl text-white p-12 rounded-[2rem] shadow-2xl relative overflow-hidden group border border-white/10">
         <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-20 -mt-20 group-hover:scale-110 transition-transform duration-700"></div>
         <div className="relative z-10">
-          <h2 className="text-4xl font-bold mb-4 tracking-tight">Welcome back, {user?.fullName}!</h2>
+          <h2 className="text-4xl font-bold mb-4 tracking-tight">Welcome back, {user?.name}!</h2>
           <p className="text-slate-300 text-lg max-w-2xl font-medium leading-relaxed">
             Track your lost items, view real-time AI matches, and manage your reported belongings all in one place.
           </p>
