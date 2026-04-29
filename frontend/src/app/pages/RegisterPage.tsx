@@ -30,8 +30,8 @@ export default function RegisterPage() {
     setIsLoading(true);
     try {
       await register(name, email, password);
-      toast.success('Protocol Initialized', { description: 'Your personnel record has been created.' });
-      navigate('/dashboard');
+      toast.success('Registration Successful!', { description: 'Please sign in with your new account.' });
+      navigate('/login');
     } catch (error: any) {
       toast.error('Registration Failed', { description: error.message || 'Protocol error during data ingestion.' });
     } finally {

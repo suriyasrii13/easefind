@@ -93,11 +93,10 @@ export default function ReportItemPage() {
       setIsListening(false);
       setIsParsing(true);
       try {
-        const prompt = `Extract item details: "${transcript}". Return JSON: itemName, category, description, location, date, itemType.`;
         const res = await fetch(`${BASE_URL}/voice/parse`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: prompt })
+          body: JSON.stringify({ text: transcript })
         });
         
         if (!res.ok) {
