@@ -59,10 +59,18 @@ export default function LandingPage() {
           </div>
 
           <div className="flex items-center gap-6">
-            <Link to="/login" className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-sky-500 transition-colors">Sign In</Link>
-            <Link to="/register" className="bg-slate-800 text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all shadow-xl shadow-slate-200 hover:bg-slate-900 hover:-translate-y-1 active:scale-95">
-              Register Now
-            </Link>
+            {user ? (
+              <Link to="/dashboard" className="bg-sky-500 text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all shadow-xl shadow-sky-200 hover:bg-sky-600 hover:-translate-y-1 active:scale-95">
+                Enter Dashboard
+              </Link>
+            ) : (
+              <>
+                <Link to="/login" className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-sky-500 transition-colors">Sign In</Link>
+                <Link to="/register" className="bg-slate-800 text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all shadow-xl shadow-slate-200 hover:bg-slate-900 hover:-translate-y-1 active:scale-95">
+                  Register Now
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </nav>
@@ -104,12 +112,20 @@ export default function LandingPage() {
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-8 mb-32">
-            <Link to="/register" className="w-full sm:w-auto bg-sky-500 text-white px-12 py-6 rounded-3xl font-black uppercase tracking-widest text-sm transition-all shadow-2xl shadow-sky-200 hover:bg-sky-600 hover:-translate-y-2 flex items-center justify-center gap-4 group active:scale-95">
-              Submit Report <ArrowRight size={22} className="group-hover:translate-x-2 transition-transform" />
-            </Link>
-            <Link to="/login" className="w-full sm:w-auto bg-white/60 backdrop-blur-xl text-slate-800 px-12 py-6 rounded-3xl font-black uppercase tracking-widest text-sm transition-all border border-pink-100 hover:bg-white flex items-center justify-center gap-4 shadow-sm active:scale-95">
-              Explore Database
-            </Link>
+            {user ? (
+              <Link to="/dashboard" className="w-full sm:w-auto bg-sky-500 text-white px-16 py-7 rounded-3xl font-black uppercase tracking-widest text-sm transition-all shadow-2xl shadow-sky-200 hover:bg-sky-600 hover:-translate-y-2 flex items-center justify-center gap-4 group active:scale-95">
+                Enter Neural Dashboard <ArrowRight size={22} className="group-hover:translate-x-2 transition-transform" />
+              </Link>
+            ) : (
+              <>
+                <Link to="/register" className="w-full sm:w-auto bg-sky-500 text-white px-12 py-6 rounded-3xl font-black uppercase tracking-widest text-sm transition-all shadow-2xl shadow-sky-200 hover:bg-sky-600 hover:-translate-y-2 flex items-center justify-center gap-4 group active:scale-95">
+                  Submit Report <ArrowRight size={22} className="group-hover:translate-x-2 transition-transform" />
+                </Link>
+                <Link to="/login" className="w-full sm:w-auto bg-white/60 backdrop-blur-xl text-slate-800 px-12 py-6 rounded-3xl font-black uppercase tracking-widest text-sm transition-all border border-pink-100 hover:bg-white flex items-center justify-center gap-4 shadow-sm active:scale-95">
+                  Explore Database
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Stats Grid */}
