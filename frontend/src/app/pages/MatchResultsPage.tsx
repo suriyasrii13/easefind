@@ -6,7 +6,7 @@ import { Button } from '../components/ui/button';
 import PersonalMatchChat from '../components/PersonalMatchChat';
 import QRHandshakeModal from '../components/QRHandshakeModal';
 import ConfirmModal from '../components/ui/ConfirmModal';
-import { getMatches, deleteMatch, confirmMatch } from "../services/api";
+import { getMatches, deleteMatch, confirmMatch, BASE_URL } from "../services/api";
 import { toast } from "sonner";
 
 interface Item {
@@ -168,6 +168,22 @@ export default function MatchResultsPage() {
             AI identifying potential item reunions
           </p>
         </div>
+        <Button
+          onClick={async () => {
+            toast.info('Running AI matching on all items...', { duration: 3000 });
+            try {
+              const res = await fetch(`${BASE_URL}/match/run-all`, { method: 'POST' });
+              const text = await res.text();
+              toast.success('AI Scan Complete!', { description: text });
+              setTimeout(fetchMatches, 1500);
+            } catch (e) {
+              toast.error('AI scan failed. Backend may be starting up, try again in 30 seconds.');
+            }
+          }}
+          className="bg-sky-500 hover:bg-sky-600 text-white font-black uppercase tracking-widest text-[9px] py-3 px-6 rounded-xl transition-all shadow-md"
+        >
+          ⚡ Run AI Matching
+        </Button>
       </div>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div className="flex gap-2 p-1.5 bg-white/30 backdrop-blur-xl rounded-[1.25rem] border border-white/40 shadow-sm">
