@@ -8,7 +8,7 @@ import TextType from '../components/ui/TextType';
 import UserGuideModal from '../components/UserGuideModal';
 
 export default function LandingPage() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [isGuideOpen, setIsGuideOpen] = useState(false);
 
