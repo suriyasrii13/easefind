@@ -197,6 +197,11 @@ export const loginUser = async (data: any) => {
     body: JSON.stringify(data),
   });
 
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(errorText || `Server Error: ${response.status}`);
+  }
+
   const result = await response.json();
   
   if (result.status !== "success") {

@@ -42,7 +42,7 @@ export default function LoginPage() {
       toast.success('Access Granted', { description: 'Secure session initialized.' });
       navigate('/dashboard');
     } catch (error: any) {
-      toast.error('Access Denied', { description: error.message || 'Invalid credentials protocol.' });
+      toast.error('Sign In Failed', { description: error.message || 'The secure connection was interrupted.' });
     } finally {
       setIsLoading(false);
     }
