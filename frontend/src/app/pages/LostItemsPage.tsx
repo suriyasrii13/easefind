@@ -27,6 +27,7 @@ interface Item {
 export default function LostItemsPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [showGlobal, setShowGlobal] = useState(false);
   const [items, setItems] = useState<Item[]>([]);
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
@@ -44,11 +45,11 @@ export default function LostItemsPage() {
 
   useEffect(() => {
     fetchLostItems();
-  }, []);
+  }, [showGlobal]);
 
   const fetchLostItems = async () => {
     try {
-      const data = await getLostItems();
+      const data = await getLostItems(showGlobal ? undefined : user?.userId);
 
       const mappedData = data.map((item: any) => ({
         id: item.itemId,
@@ -119,6 +120,16 @@ export default function LostItemsPage() {
           <p className="text-slate-500 mt-1 text-sm font-medium">Search items reported as lost on campus.</p>
         </div>
         <div className="flex gap-3">
+          <Button 
+            onClick={() => setShowGlobal(!showGlobal)}
+            className={`px-6 py-3 rounded-xl transition-all font-black uppercase tracking-widest text-[9px] shadow-sm border ${
+              showGlobal 
+                ? "bg-sky-500 text-white border-sky-400" 
+                : "bg-white text-slate-500 border-pink-100"
+            }`}
+          >
+            {showGlobal ? "System History Active" : "Personal Records"}
+          </Button>
           {items.some(i => i.userId?.toString() === user?.userId?.toString()) && (
             <Button 
               onClick={handleClearAll}

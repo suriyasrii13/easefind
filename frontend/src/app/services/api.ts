@@ -146,13 +146,15 @@ export const clearAllNotifications = async (userId: string | number): Promise<vo
 
 
 
-export const getLostItems = async () => {
-  const response = await fetch(`${BASE_URL}/lost-items`);
+export const getLostItems = async (userId?: string | number) => {
+  const url = userId ? `${BASE_URL}/lost-items?userId=${userId}` : `${BASE_URL}/lost-items`;
+  const response = await fetch(url);
   return response.json();
 };
 
-export const getFoundItems = async () => {
-  const response = await fetch(`${BASE_URL}/found-items`);
+export const getFoundItems = async (userId?: string | number) => {
+  const url = userId ? `${BASE_URL}/found-items?userId=${userId}` : `${BASE_URL}/found-items`;
+  const response = await fetch(url);
   return response.json();
 };
 
