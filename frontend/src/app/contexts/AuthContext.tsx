@@ -44,14 +44,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("user", JSON.stringify(userData));
   };
 
-  const register = async (fullName: string, email: string, password: string) => {
-    const response = await registerUser({ fullName, email, password });
+  const register = async (name: string, email: string, password: string) => {
+    const response = await registerUser({ name, email, password });
     
     // Auto-login after registration
     const userData: User = {
       userId: response.userId,
       email: response.email,
-      name: response.fullName,
+      name: name,
       role: "user"
     };
     login(userData, response.token);

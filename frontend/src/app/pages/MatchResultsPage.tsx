@@ -69,16 +69,23 @@ export default function MatchResultsPage() {
     }
   }, [matches, highlightedMatchId]);
 
+  const [viewMode, setViewMode] = useState<'PERSONAL' | 'GLOBAL'>('PERSONAL');
+
   useEffect(() => {
     if (user) {
       fetchMatches();
     }
-  }, [user]);
+  }, [user, viewMode]);
 
   const fetchMatches = async () => {
     try {
-      // Fetch ALL matches for the global history view
-      const data = await getMatches(); 
+      if (!user) return;
+      
+      // Fetch based on selected mode
+      const data = viewMode === 'PERSONAL' 
+        ? await getMatches(user.userId) 
+        : await getMatches(); // No ID = Global fetch
+        
       setMatches(data);
     } catch (error) {
       console.error("Error fetching matches:", error);
@@ -93,9 +100,12 @@ export default function MatchResultsPage() {
       type: 'info',
       onConfirm: async () => {
         try {
+          // Optimistic UI Update: Mark it as resolved locally so it disappears from 'Pending' list
+          setMatches(prev => prev.map(m => m.id === id ? { ...m, status: 'RESOLVED' } : m));
+          
           await confirmMatch(id);
-          toast.success("Item Marked as Recovered!");
-          fetchMatches();
+          toast.success("Match marked as recovered!");
+          setTimeout(fetchMatches, 1000);
         } catch (error: any) {
           toast.error(error.message || "Failed to confirm match");
         }
@@ -111,9 +121,12 @@ export default function MatchResultsPage() {
       type: 'danger',
       onConfirm: async () => {
         try {
+          // Optimistic UI Update: Remove it from the screen instantly
+          setMatches(prev => prev.filter(m => m.id !== id));
+          
           await deleteMatch(id);
           toast.success("Match cleared successfully");
-          fetchMatches();
+          setTimeout(fetchMatches, 1000); // Verify with server after 1s
         } catch (error: any) {
           toast.error(error.message || "Failed to clear match");
         }
@@ -155,12 +168,37 @@ export default function MatchResultsPage() {
             AI identifying potential item reunions
           </p>
         </div>
+      </div>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+        <div className="flex gap-2 p-1.5 bg-white/30 backdrop-blur-xl rounded-[1.25rem] border border-white/40 shadow-sm">
+          <button
+            onClick={() => setViewMode('PERSONAL')}
+            className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+              viewMode === 'PERSONAL' 
+                ? 'bg-sky-500 text-white shadow-lg shadow-sky-200' 
+                : 'text-slate-400 hover:text-slate-600 hover:bg-white/50'
+            }`}
+          >
+            My Matches
+          </button>
+          <button
+            onClick={() => setViewMode('GLOBAL')}
+            className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+              viewMode === 'GLOBAL' 
+                ? 'bg-sky-500 text-white shadow-lg shadow-sky-200' 
+                : 'text-slate-400 hover:text-slate-600 hover:bg-white/50'
+            }`}
+          >
+            Global Discovery
+          </button>
+        </div>
+
         {matches.some(m => m.lostItem.userId?.toString() === user?.userId?.toString() || m.foundItem.userId?.toString() === user?.userId?.toString()) && (
           <Button 
             onClick={handleClearAll}
             className="bg-white/50 text-slate-500 hover:text-rose-500 border border-pink-100 px-6 py-3 rounded-xl transition-all font-black uppercase tracking-widest text-[9px] shadow-sm"
           >
-            Clear My Matches
+            Clear List
           </Button>
         )}
       </div>
@@ -195,16 +233,13 @@ export default function MatchResultsPage() {
                 </div>
               )}
 
-              {(match.lostItem.userId?.toString() === user?.userId?.toString() || 
-                match.foundItem.userId?.toString() === user?.userId?.toString()) && (
-                <button
-                  onClick={() => handleDeleteMatch(match.id)}
-                  className="absolute top-8 right-16 p-4 bg-white/80 backdrop-blur-md hover:bg-pink-500 text-slate-400 hover:text-white rounded-2xl transition-all opacity-0 group-hover:opacity-100 z-30"
-                  title="Clear Match"
-                >
-                  <Trash2 size={20} />
-                </button>
-              )}
+              <button
+                onClick={() => handleDeleteMatch(match.id)}
+                className="absolute top-8 right-16 p-4 bg-white/80 backdrop-blur-md hover:bg-pink-500 text-slate-400 hover:text-white rounded-2xl transition-all z-30"
+                title="Clear Match"
+              >
+                <Trash2 size={20} />
+              </button>
 
               <div className="flex items-center justify-between mb-8 flex-wrap gap-6">
                 <div className="flex items-center gap-6">

@@ -59,10 +59,10 @@ def match_ai():
 
     if final_score > 0.85:
         status = "High Confidence"
-    elif final_score > 0.50:
+    elif final_score >= 0.75:
         status = "Potential Match"
     else:
-        status = "Low Confidence"
+        status = "Low Confidence (Filtered)"
 
     return jsonify({
         "image_score": image_score,

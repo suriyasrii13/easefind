@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from "../contexts/AuthContext";
 import { Calendar, MapPin, User, Phone, Search, Trash2 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import ConfirmModal from '../components/ui/ConfirmModal';
@@ -161,15 +162,13 @@ export default function FoundItemsPage() {
                   </div>
                 )}
                 
-                {item.userId?.toString() === user?.userId?.toString() && (
-                  <button
-                    onClick={() => handleDelete(item.id)}
-                    className="absolute top-4 left-4 p-3 bg-white/90 backdrop-blur-md hover:bg-pink-500 hover:text-white text-pink-500 rounded-xl shadow-lg transition-all opacity-0 group-hover:opacity-100 z-30"
-                    title="Clear Item"
-                  >
-                    <Trash2 size={18} />
-                  </button>
-                )}
+                <button
+                  onClick={() => handleDelete(item.id)}
+                  className="absolute top-4 left-4 p-3 bg-white/90 backdrop-blur-md hover:bg-pink-500 hover:text-white text-pink-500 rounded-xl shadow-lg transition-all z-30"
+                  title="Clear Item"
+                >
+                  <Trash2 size={18} />
+                </button>
 
                 <div className="absolute top-4 right-4 bg-sky-500 text-white px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-md">
                   FOUND

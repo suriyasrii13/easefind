@@ -1,9 +1,10 @@
 import { useAuth } from '../contexts/AuthContext';
 import { Link } from 'react-router';
-import { Package, Search, CheckCircle, TrendingUp } from 'lucide-react';
+import { Package, Search, CheckCircle, TrendingUp, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { BASE_URL } from '../services/api';
+import { BASE_URL, deleteLostItem, deleteFoundItem, deleteMatch } from '../services/api';
+import { toast } from 'sonner';
 
 export default function DashboardHome() {
 
@@ -24,21 +25,22 @@ export default function DashboardHome() {
       .then(res => setStatsData(res.data))
       .catch(err => console.error(err));
 
-    // 🕒 Fetch recent activity feed
+    // 🕒 Fetch recent activity feed (Filtered for speed)
     const fetchActivity = async () => {
+      if (!user) return;
       try {
         const [lost, found, matches] = await Promise.all([
-          axios.get(`${BASE_URL}/lost-items`),
-          axios.get(`${BASE_URL}/found-items`),
-          axios.get(`${BASE_URL}/match`)
+          axios.get(`${BASE_URL}/lost-items?userId=${user.userId}`),
+          axios.get(`${BASE_URL}/found-items?userId=${user.userId}`),
+          axios.get(`${BASE_URL}/match?userId=${user.userId}`)
         ]);
 
         const combined = [
-          ...lost.data.map((i: any) => ({ ...i, type: 'lost', time: i.createdAt || i.dateLost })),
-          ...found.data.map((i: any) => ({ ...i, type: 'found', time: i.createdAt || i.dateFound })),
-          ...matches.data.map((i: any) => ({ ...i, type: 'match', time: i.matchDate || new Date() }))
+          ...lost.data.map((i: any) => ({ ...i, id: i.itemId, type: 'lost', time: i.createdAt || i.dateLost })),
+          ...found.data.map((i: any) => ({ ...i, id: i.itemId, type: 'found', time: i.createdAt || i.dateFound })),
+          ...matches.data.map((i: any) => ({ ...i, id: i.matchId, type: 'match', time: i.matchDate || new Date() }))
         ].sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
-        .slice(0, 5); // Show latest 5
+        .slice(0, 5); 
 
         setActivities(combined);
       } catch (err) {
@@ -47,13 +49,35 @@ export default function DashboardHome() {
     };
 
     fetchActivity();
-  }, []);
+    
+    // Add to window for external access if needed (or just keep it local)
+    (window as any).refreshActivity = fetchActivity;
+  }, [user]);
+
+  const fetchActivity = () => (window as any).refreshActivity?.();
+
+  const handleDeleteActivity = async (id: any, type: string) => {
+    try {
+      if (type === 'lost') await deleteLostItem(id);
+      else if (type === 'found') await deleteFoundItem(id);
+      else if (type === 'match') await deleteMatch(id);
+      
+      toast.success(`${type.toUpperCase()} removed`);
+      fetchActivity();
+      
+      // Update stats too
+      axios.get(`${BASE_URL}/dashboard/stats`)
+        .then(res => setStatsData(res.data));
+    } catch (error) {
+      toast.error("Failed to remove activity");
+    }
+  };
 
   const stats = [
     { label: 'Total Lost Items', value: statsData.lost, icon: Package, color: 'bg-[#FCA5A5]/20 text-[#DC2626]' },
     { label: 'Total Found Items', value: statsData.found, icon: Search, color: 'bg-[#93C5FD]/20 text-[#2563EB]' },
     { label: 'Matches Found', value: statsData.matches, icon: CheckCircle, color: 'bg-[#86EFAC]/20 text-[#16A34A]' },
-    { label: 'Success Rate', value: statsData.successRate + "%", icon: TrendingUp, color: 'bg-purple-50 text-purple-600' },
+    { label: 'Success Rate', value: Number(statsData.successRate).toFixed(1) + "%", icon: TrendingUp, color: 'bg-purple-50 text-purple-600' },
   ];
 
   const quickActions = [
@@ -117,7 +141,7 @@ export default function DashboardHome() {
             <p className="text-slate-500 text-center py-10">No recent activity protocol detected.</p>
           ) : (
             activities.map((act, i) => (
-              <div key={i} className="flex items-center gap-6 p-6 bg-white/40 backdrop-blur-md rounded-2xl border border-white/60 hover:bg-white hover:shadow-lg transition-all group animate-in fade-in slide-in-from-bottom-2">
+              <div key={i} className="flex items-center gap-6 p-6 bg-white/40 backdrop-blur-md rounded-2xl border border-white/60 hover:bg-white hover:shadow-lg transition-all group animate-in fade-in slide-in-from-bottom-2 relative">
                 <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-sm ${
                   act.type === 'lost' ? 'bg-rose-100 text-rose-600' : 
                   act.type === 'found' ? 'bg-blue-100 text-blue-600' : 
@@ -127,22 +151,31 @@ export default function DashboardHome() {
                    act.type === 'found' ? <Search size={28} /> : 
                    <CheckCircle size={28} />}
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 pr-12">
                   <p className="text-lg text-[#1e293b] font-bold">
                     {act.type === 'match' 
                       ? `AI Match: ${act.lostItem?.itemName} & ${act.foundItem?.itemName}`
                       : `${act.type === 'lost' ? 'Lost' : 'Found'} item "${act.itemName}" reported`}
                   </p>
                   <p className="text-slate-500 font-medium text-sm">
-                    {new Date(act.time).toLocaleDateString()} • By {act.user?.fullName || act.finder?.fullName || 'Anonymous'}
+                    {new Date(act.time).toLocaleDateString()} • By {act.user?.fullName || act.user?.name || act.finder?.fullName || act.finder?.name || 'Anonymous'}
                   </p>
                 </div>
-                <div className={`px-5 py-2 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg ${
-                  act.type === 'lost' ? 'bg-rose-500 shadow-rose-200' : 
-                  act.type === 'found' ? 'bg-blue-500 shadow-blue-200' : 
-                  'bg-emerald-500 shadow-emerald-200'
-                }`}>
-                  {act.type}
+                <div className="flex items-center gap-3">
+                  <div className={`px-5 py-2 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg ${
+                    act.type === 'lost' ? 'bg-rose-500 shadow-rose-200' : 
+                    act.type === 'found' ? 'bg-blue-500 shadow-blue-200' : 
+                    'bg-emerald-500 shadow-emerald-200'
+                  }`}>
+                    {act.type}
+                  </div>
+                  <button
+                    onClick={() => handleDeleteActivity(act.id, act.type)}
+                    className="p-3 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all opacity-0 group-hover:opacity-100"
+                    title="Remove from history"
+                  >
+                    <Trash2 size={18} />
+                  </button>
                 </div>
               </div>
             ))

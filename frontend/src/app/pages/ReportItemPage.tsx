@@ -93,7 +93,7 @@ export default function ReportItemPage() {
       setIsListening(false);
       setIsParsing(true);
       try {
-        const prompt = `Extract item details: "${transcript}". Return JSON: itemName, category, description, location, date.`;
+        const prompt = `Extract item details: "${transcript}". Return JSON: itemName, category, description, location, date, itemType.`;
         const res = await fetch(`${BASE_URL}/voice/parse`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -111,6 +111,7 @@ export default function ReportItemPage() {
         if (data.description) setDescription(data.description);
         if (data.location) setLocation(data.location);
         if (data.date) setDate(data.date);
+        if (data.itemType) setItemType(data.itemType);
         
         toast.success("AI has filled the details successfully!", {
           description: "Review the filled fields below."
@@ -161,11 +162,9 @@ export default function ReportItemPage() {
     if (itemType === 'found' && !storageLocation.trim()) missingFields.push('Current Storage Location');
 
     if (missingFields.length > 0) {
-      // Show one toast per missing field so they're each clearly visible
-      missingFields.forEach((field, i) => {
-        setTimeout(() => {
-          toast.error(`Missing: ${field}`, { duration: 4000 });
-        }, i * 150);
+      toast.error(`Required: Please fill in the ${missingFields[0]}`, {
+        description: "This field is mandatory for reporting.",
+        duration: 4000
       });
       return;
     }

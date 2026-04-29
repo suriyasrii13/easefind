@@ -38,6 +38,7 @@ export default function DashboardLayout() {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [isNavigating, setIsNavigating] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -46,11 +47,15 @@ export default function DashboardLayout() {
     }
 
     fetchInitialUnreadCount();
+    setIsNavigating(false); // Reset on mount/change
 
-    const socket = new SockJS(SOCKET_URL);
+    // Optimized Socket Connection with shorter timeout
+    const socket = new SockJS(SOCKET_URL, null, { timeout: 10000 });
     const stompClient = new Client({
       webSocketFactory: () => socket as any,
-      reconnectDelay: 5000,
+      reconnectDelay: 10000,
+      heartbeatIncoming: 4000,
+      heartbeatOutgoing: 4000,
       onConnect: () => {
         stompClient.subscribe(`/topic/user_${user.userId}`, (message) => {
           const notification = JSON.parse(message.body);
@@ -70,7 +75,7 @@ export default function DashboardLayout() {
 
     stompClient.activate();
     return () => stompClient.deactivate();
-  }, [user, navigate]);
+  }, [user, navigate, location.pathname]);
 
   const fetchInitialUnreadCount = async () => {
     if (!user) return;
@@ -85,27 +90,39 @@ export default function DashboardLayout() {
   const contextValue = { unreadCount, refreshUnreadCount: fetchInitialUnreadCount };
   const isActive = (path: string) => location.pathname === path;
 
+  // Track navigation state for progress bar
+  useEffect(() => {
+    setIsNavigating(true);
+    const timer = setTimeout(() => setIsNavigating(false), 500);
+    return () => clearTimeout(timer);
+  }, [location.pathname]);
+
   return (
     <div className="min-h-screen relative text-slate-800 overflow-x-hidden bg-gradient-to-br from-pink-50 via-sky-50 to-white font-sans">
       
+      {/* Top Progress Bar */}
+      {isNavigating && (
+        <div className="fixed top-0 left-0 h-1 bg-sky-500 z-[100] animate-pulse transition-all duration-500 shadow-[0_0_10px_#0ea5e9]" style={{ width: '100%' }}></div>
+      )}
+
       {/* Universal Premium Soft Background */}
       <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-[0.08] mix-blend-multiply"
           style={{ backgroundImage: `url(${bgImage})` }}
         />
-        <div className="absolute inset-0 bg-gradient-to-br from-pink-100/30 via-sky-100/30 to-white/30 backdrop-blur-[2px] z-10"></div>
-        <div className="absolute inset-0 z-0 opacity-20">
+        <div className="absolute inset-0 bg-gradient-to-br from-pink-200/30 via-sky-200/30 to-white/30 backdrop-blur-[2px] z-10"></div>
+        <div className="absolute inset-0 z-0 opacity-25">
            <Prism
             animationType="rotate"
-            timeScale={0.2}
-            height={5}
-            baseWidth={7}
-            scale={4.5}
-            hueShift={280} // Shift towards pink/purple
+            timeScale={0.1}
+            height={4}
+            baseWidth={6}
+            scale={4}
+            hueShift={280}
             colorFrequency={0.5}
             noise={0}
-            glow={0.5}
+            glow={0.6}
           />
         </div>
       </div>
@@ -115,6 +132,7 @@ export default function DashboardLayout() {
         <div className="max-w-[1600px] mx-auto flex items-center justify-between h-full px-8 relative z-10">
           <div className="flex items-center cursor-pointer" onClick={() => navigate('/dashboard')}>
             <span className="text-2xl font-black tracking-tighter text-slate-800">EaseFind<span className="text-sky-500">.AI</span></span>
+            <span className="ml-3 px-2 py-1 bg-sky-500/10 text-sky-500 text-[10px] font-black rounded-lg border border-sky-100 uppercase tracking-tighter">v1.2 - Optimized</span>
           </div>
 
           <div className="hidden md:flex items-center gap-10">

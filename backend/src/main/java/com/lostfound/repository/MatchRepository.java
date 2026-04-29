@@ -22,5 +22,10 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
     @org.springframework.data.jpa.repository.Query("DELETE FROM Match m WHERE m.foundItem.itemId = :itemId")
     void deleteByFoundItemItemId(Long itemId);
 
+    @Transactional
+    @Modifying
+    @org.springframework.data.jpa.repository.Query("DELETE FROM Match m WHERE m.matchId = :matchId")
+    void forceDelete(Long matchId);
+
     java.util.List<Match> findByLostItemUserUserIdOrFoundItemFinderUserId(Long lostUserId, Long finderUserId);
 }

@@ -203,7 +203,7 @@ export default function NotificationsPage() {
               >
                 <button 
                   onClick={() => handleDelete(notification.id)}
-                  className="absolute top-6 right-6 p-3 text-slate-300 hover:text-white hover:bg-rose-500 rounded-xl opacity-0 group-hover:opacity-100 transition-all"
+                  className="absolute top-6 right-6 p-3 text-slate-300 hover:text-white hover:bg-rose-500 rounded-xl transition-all"
                 >
                   <Trash2 size={16} />
                 </button>

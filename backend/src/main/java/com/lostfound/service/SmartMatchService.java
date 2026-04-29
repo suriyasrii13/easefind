@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import com.lostfound.entity.*;
 import com.lostfound.repository.*;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class SmartMatchService {
@@ -129,13 +130,14 @@ public class SmartMatchService {
                 double imageScore = root.path("image_score").asDouble();
                 
                 List<String> reasons = new ArrayList<>();
-                if (imageScore > 0.6) reasons.add("AI visual similarity");
-                if (textScore > 0.6) reasons.add("Matching descriptions");
+                if (imageScore > 0.65) reasons.add("AI visual similarity");
+                if (textScore > 0.65) reasons.add("Matching descriptions");
                 if (nameSimilarity > 0.8) reasons.add("Strong name match");
                 
                 combinedReason = reasons.isEmpty() ? "AI comparison" : String.join(", ", reasons);
 
-                if (confidenceScore > 0.45 || textScore > 0.85 || nameSimilarity > 0.9) {
+                // 🚀 FINAL ACCURACY BOOST: 0.75 (75%)
+                if (confidenceScore >= 0.75 || textScore > 0.9 || nameSimilarity > 0.95) {
                     isMatch = true;
                     // Boost confidence if names match perfectly
                     if (lostName.equals(foundName)) {
@@ -213,26 +215,28 @@ public class SmartMatchService {
         messagingTemplate.convertAndSend("/topic/user_" + userId, notification);
     }
 
+    @Transactional
     public void confirmMatch(Long id) {
         Match match = matchRepo.findById(id).orElse(null);
         if (match != null) {
             match.setStatus("RESOLVED"); 
-            matchRepo.save(match);
+            matchRepo.saveAndFlush(match);
 
             LostItem lost = match.getLostItem();
             FoundItem found = match.getFoundItem();
             
             if (lost != null) {
                 lost.setStatus("MATCHED");
-                lostRepo.save(lost);
+                lostRepo.saveAndFlush(lost);
             }
             if (found != null) {
                 found.setStatus("MATCHED");
-                foundRepo.save(found);
+                foundRepo.saveAndFlush(found);
             }
         }
     }
 
+    @Transactional
     public void deleteMatch(Long id) {
         Match match = matchRepo.findById(id).orElse(null);
         if (match != null) {
@@ -240,13 +244,14 @@ public class SmartMatchService {
             FoundItem found = match.getFoundItem();
             if (lost != null) {
                 lost.setStatus("PENDING");
-                lostRepo.save(lost);
+                lostRepo.saveAndFlush(lost);
             }
             if (found != null) {
                 found.setStatus("PENDING");
-                foundRepo.save(found);
+                foundRepo.saveAndFlush(found);
             }
-            matchRepo.delete(match);
+            matchRepo.forceDelete(id);
+            matchRepo.flush();
         }
     }
 }

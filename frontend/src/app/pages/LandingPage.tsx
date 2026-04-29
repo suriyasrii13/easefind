@@ -1,6 +1,11 @@
+import { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
+import { Search, HelpCircle, Zap, ArrowRight, Brain, ShieldCheck } from 'lucide-react';
+import bgImage from '../../assets/background.png';
+import Prism from '../components/ui/Prism';
+import TextType from '../components/ui/TextType';
+import UserGuideModal from '../components/UserGuideModal';
 
 export default function LandingPage() {
   const { user } = useAuth();

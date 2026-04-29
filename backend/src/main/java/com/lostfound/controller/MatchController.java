@@ -33,7 +33,7 @@ public class MatchController {
         if (userId != null) {
             return matchService.getMatchesForUser(userId);
         }
-        return matchService.findMatches();
+        return matchRepo.findAll();
     }
 
     // 2️⃣ NEW AI endpoint
