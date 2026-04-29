@@ -101,7 +101,10 @@ public class ItemController {
     }
 
     @GetMapping("/lost-items")
-    public List<LostItem> getAllLostItems() {
+    public List<LostItem> getLostItems(@RequestParam(value = "userId", required = false) Long userId) {
+        if (userId != null) {
+            return lostItemService.getLostItemsByUser(userId);
+        }
         return lostItemService.getAllLostItems();
     }
 
@@ -175,7 +178,10 @@ public class ItemController {
     }
 
     @GetMapping("/found-items")
-    public List<FoundItem> getAllFoundItems() {
+    public List<FoundItem> getFoundItems(@RequestParam(value = "userId", required = false) Long userId) {
+        if (userId != null) {
+            return foundItemService.getFoundItemsByUser(userId);
+        }
         return foundItemService.getAll();
     }
 

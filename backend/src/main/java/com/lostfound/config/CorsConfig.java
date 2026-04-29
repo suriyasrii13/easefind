@@ -19,7 +19,7 @@ public class CorsConfig {
             public void addCorsMappings(CorsRegistry registry) {
 
                 registry.addMapping("/**")
-                        .allowedOriginPatterns("http://localhost:*", "https://*.vercel.app")
+                        .allowedOriginPatterns("http://localhost:*", "https://*.vercel.app", "https://frontend-navy-seven-51.vercel.app")
                         .allowedMethods("*")
                         .allowedHeaders("*")
                         .allowCredentials(true);

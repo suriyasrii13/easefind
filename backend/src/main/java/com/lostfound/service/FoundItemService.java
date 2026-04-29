@@ -31,6 +31,10 @@ public class FoundItemService {
         return foundItemRepository.findAll();
     }
 
+    public List<FoundItem> getFoundItemsByUser(Long userId) {
+        return foundItemRepository.findByFinder_UserId(userId);
+    }
+
     @Transactional
     public void delete(Long id) {
         matchRepository.deleteByFoundItemItemId(id);
