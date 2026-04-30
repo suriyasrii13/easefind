@@ -1,21 +1,23 @@
 package com.lostfound.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.lostfound.service.GeminiService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
 import java.util.Map;
-import java.util.HashMap;
 
 @RestController
 @RequestMapping("/api/voice")
-
 public class VoiceController {
 
-    private final RestTemplate restTemplate = new RestTemplate();
-    
-    @org.springframework.beans.factory.annotation.Value("${AI_SERVER_URL:http://localhost:5000}")
-    private String aiServerUrl;
+    @Autowired
+    private GeminiService geminiService;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @PostMapping("/parse")
     public ResponseEntity<?> parseVoiceText(@RequestBody Map<String, String> payload) {
@@ -25,38 +27,41 @@ public class VoiceController {
         }
 
         try {
-            // Forward to Python AI service
-            Map<String, String> pythonRequest = new HashMap<>();
-            pythonRequest.put("text", text);
-
-            System.out.println("VOICE_AI -> Forwarding request to: " + aiServerUrl + "/voice");
-            ResponseEntity<Map> aiResponse = restTemplate.postForEntity(aiServerUrl + "/voice", pythonRequest, Map.class);
-            return ResponseEntity.ok(aiResponse.getBody());
+            System.out.println("VOICE_AI -> Forwarding request to Gemini API");
+            String jsonResult = geminiService.parseVoice(text);
+            
+            // Parse the JSON string from Gemini back to a Map to return as JSON
+            Map<String, Object> resultMap = objectMapper.readValue(jsonResult, Map.class);
+            return ResponseEntity.ok(resultMap);
 
         } catch (Exception e) {
             System.err.println("VOICE_AI_ERROR: " + e.getMessage());
             return ResponseEntity.status(500).body(Map.of(
                 "error", "AI Service Connection Failed",
                 "details", e.getMessage(),
-                "suggestion", "Check if " + aiServerUrl + " is online. Ensure your laptop can reach the internet."
+                "suggestion", "Check your Gemini API Key and internet connection."
             ));
         }
     }
 
     @PostMapping("/verify-image")
-    public ResponseEntity<?> verifyImage(@RequestParam("image") org.springframework.web.multipart.MultipartFile image) {
+    public ResponseEntity<?> verifyImage(@RequestParam("image") MultipartFile image) {
+        File tempFile = null;
         try {
-            org.springframework.util.MultiValueMap<String, Object> body = new org.springframework.util.LinkedMultiValueMap<>();
-            body.add("image", image.getResource());
+            tempFile = File.createTempFile("verify-", ".jpg");
+            image.transferTo(tempFile);
 
-            org.springframework.http.HttpEntity<org.springframework.util.MultiValueMap<String, Object>> requestEntity = 
-                new org.springframework.http.HttpEntity<>(body, new org.springframework.http.HttpHeaders());
-
-            ResponseEntity<Map> aiResponse = restTemplate.postForEntity(aiServerUrl + "/verify-image", requestEntity, Map.class);
-            return ResponseEntity.ok(aiResponse.getBody());
+            String jsonResult = geminiService.verifyImage(tempFile);
+            Map<String, Object> resultMap = objectMapper.readValue(jsonResult, Map.class);
+            return ResponseEntity.ok(resultMap);
 
         } catch (Exception e) {
             return ResponseEntity.status(500).body(Map.of("error", "Image verification service offline: " + e.getMessage()));
+        } finally {
+            if (tempFile != null && tempFile.exists()) {
+                tempFile.delete();
+            }
         }
     }
 }
+

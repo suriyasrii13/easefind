@@ -33,8 +33,13 @@ export default function AIChatPanel({ isOpen, onClose }: AIChatPanelProps) {
       const data = await askChatBot(userQuery);
       setMessages(prev => [...prev, { text: data.response, isUser: false }]);
     } catch (e) {
-      setMessages(prev => [...prev, { text: "I'm having trouble connecting to my neural network right now. Please test your connection and try again!", isUser: false }]);
+      console.error("AI Chat Error:", e);
+      setMessages(prev => [...prev, { 
+        text: "I'm having trouble connecting to my neural network. 🧠\n\nPlease ensure the AI Service is running on port 5000 and the backend is correctly configured.", 
+        isUser: false 
+      }]);
     } finally {
+
       setIsTyping(false);
     }
   };

@@ -138,6 +138,9 @@ export default function ReportItemPage() {
         toast.error("Voice Recognition Error", { description: `Error: ${event.error}. Please try again.` });
       }
     };
+    recognition.onend = () => {
+      setIsListening(false);
+    };
     recognition.start();
   };
 

@@ -40,43 +40,6 @@ export default function DashboardLayout() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [isNavigating, setIsNavigating] = useState(false);
 
-  useEffect(() => {
-    if (!user) {
-      navigate('/');
-      return;
-    }
-
-    fetchInitialUnreadCount();
-    setIsNavigating(false); // Reset on mount/change
-
-    // Optimized Socket Connection with shorter timeout
-    const socket = new SockJS(SOCKET_URL, null, { timeout: 10000 });
-    const stompClient = new Client({
-      webSocketFactory: () => socket as any,
-      reconnectDelay: 10000,
-      heartbeatIncoming: 4000,
-      heartbeatOutgoing: 4000,
-      onConnect: () => {
-        stompClient.subscribe(`/topic/user_${user.userId}`, (message) => {
-          const notification = JSON.parse(message.body);
-          setUnreadCount((prev) => prev + 1);
-          
-          toast.message(notification.title, {
-            description: notification.message,
-            style: {
-              background: '#ffffff',
-              color: '#1e293b',
-              border: '1px solid #e2e8f0'
-            }
-          });
-        });
-      }
-    });
-
-    stompClient.activate();
-    return () => stompClient.deactivate();
-  }, [user, navigate, location.pathname]);
-
   const fetchInitialUnreadCount = async () => {
     if (!user) return;
     try {
@@ -87,10 +50,61 @@ export default function DashboardLayout() {
     }
   };
 
+  // ─── WebSocket: connect ONCE per login session, not on every navigation ───
+  useEffect(() => {
+    if (!user) {
+      navigate('/');
+      return;
+    }
+
+    fetchInitialUnreadCount();
+
+    const socket = new SockJS(SOCKET_URL, null, { timeout: 10000 });
+    const stompClient = new Client({
+      webSocketFactory: () => socket as any,
+      reconnectDelay: 10000,
+      heartbeatIncoming: 4000,
+      heartbeatOutgoing: 4000,
+      onConnect: () => {
+        // Subscribe to personal notifications
+        stompClient.subscribe(`/topic/user_${user.userId}`, (message) => {
+          const notification = JSON.parse(message.body);
+          setUnreadCount((prev) => prev + 1);
+          toast.message(notification.title, {
+            description: notification.message,
+            duration: 6000,
+            style: {
+              background: '#ffffff',
+              color: '#1e293b',
+              border: '1px solid #e2e8f0'
+            }
+          });
+        });
+      },
+      onStompError: () => {
+        // Silently handle errors — polling fallback will catch missed notifications
+      }
+    });
+
+    stompClient.activate();
+
+    // ─── Polling fallback: refresh unread count every 30s ───────────────────
+    const pollInterval = setInterval(() => {
+      fetchInitialUnreadCount();
+    }, 30000);
+
+    return () => {
+      stompClient.deactivate();
+      clearInterval(pollInterval);
+    };
+
+  }, [user]); // ✅ Only depends on user — NOT location.pathname
+
+
   const contextValue = { unreadCount, refreshUnreadCount: fetchInitialUnreadCount };
   const isActive = (path: string) => location.pathname === path;
 
-  // Track navigation state for progress bar
+  // ─── Navigation progress bar (separate from WebSocket) ──────────────────
   useEffect(() => {
     setIsNavigating(true);
     const timer = setTimeout(() => setIsNavigating(false), 500);
@@ -98,6 +112,7 @@ export default function DashboardLayout() {
   }, [location.pathname]);
 
   return (
+
     <div className="min-h-screen relative text-slate-800 overflow-x-hidden bg-gradient-to-br from-pink-50 via-sky-50 to-white font-sans">
       
       {/* Top Progress Bar */}

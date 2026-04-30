@@ -1,6 +1,10 @@
-export const BASE_URL = "https://easyfindaimysql-production.up.railway.app/api";
-export const SOCKET_URL = "https://easyfindaimysql-production.up.railway.app/ws";
-export const UPLOADS_URL = "https://easyfindaimysql-production.up.railway.app/uploads";
+const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const API_DOMAIN = isLocalhost ? "http://localhost:8080" : "https://easyfindaimysql-production.up.railway.app";
+const WS_DOMAIN = isLocalhost ? "http://localhost:8080" : "https://easyfindaimysql-production.up.railway.app";
+
+export const BASE_URL = `${API_DOMAIN}/api`;
+export const SOCKET_URL = `${WS_DOMAIN}/ws`;
+export const UPLOADS_URL = `${API_DOMAIN}/uploads`;
 
 export const getMatches = async (userId?: string | number) => {
   const url = userId ? `${BASE_URL}/match?userId=${userId}` : `${BASE_URL}/match`;
@@ -24,11 +28,12 @@ export const getMatches = async (userId?: string | number) => {
     },
     confidence: match.confidenceScore * 100, // convert 0.9 → 90%
     matchReason: match.matchReason ? match.matchReason.split(', ') : ["AI visual & text similarity"],
-    matchDate: new Date().toISOString(),
+    matchDate: match.createdAt || match.matchDate || new Date().toISOString(), // ✅ use real date
     status: match.status,
     isConfidential: match.lostItem?.confidential || match.foundItem?.confidential
   }));
 };
+
 
 export const verifySerialNumber = async (matchId: number, serialNumber: string) => {
   const response = await fetch(`${BASE_URL}/match/${matchId}/verify`, {

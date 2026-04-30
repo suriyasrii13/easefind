@@ -6,7 +6,7 @@ import { Button } from '../components/ui/button';
 import PersonalMatchChat from '../components/PersonalMatchChat';
 import QRHandshakeModal from '../components/QRHandshakeModal';
 import ConfirmModal from '../components/ui/ConfirmModal';
-import { getMatches, deleteMatch, confirmMatch, BASE_URL } from "../services/api";
+import { getMatches, deleteMatch, confirmMatch } from "../services/api";
 import { toast } from "sonner";
 
 interface Item {
@@ -84,9 +84,13 @@ export default function MatchResultsPage() {
       // Fetch based on selected mode
       const data = viewMode === 'PERSONAL' 
         ? await getMatches(user.userId) 
-        : await getMatches(); // No ID = Global fetch
+        : await getMatches(); // No ID = fetch ALL matches (full history)
         
-      setMatches(data);
+      // Sort newest first
+      const sorted = [...data].sort((a, b) =>
+        new Date(b.matchDate).getTime() - new Date(a.matchDate).getTime()
+      );
+      setMatches(sorted);
     } catch (error) {
       console.error("Error fetching matches:", error);
     }
@@ -161,29 +165,11 @@ export default function MatchResultsPage() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 pb-12 relative z-10">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h2 className="text-3xl text-slate-800 font-black tracking-tighter uppercase">Match Results</h2>
-          <p className="text-slate-500 mt-1 text-sm font-medium">
-            AI identifying potential item reunions
-          </p>
-        </div>
-        <Button
-          onClick={async () => {
-            toast.info('Running AI matching on all items...', { duration: 3000 });
-            try {
-              const res = await fetch(`${BASE_URL}/match/run-all`, { method: 'POST' });
-              const text = await res.text();
-              toast.success('AI Scan Complete!', { description: text });
-              setTimeout(fetchMatches, 1500);
-            } catch (e) {
-              toast.error('AI scan failed. Backend may be starting up, try again in 30 seconds.');
-            }
-          }}
-          className="bg-sky-500 hover:bg-sky-600 text-white font-black uppercase tracking-widest text-[9px] py-3 px-6 rounded-xl transition-all shadow-md"
-        >
-          ⚡ Run AI Matching
-        </Button>
+      <div>
+        <h2 className="text-3xl text-slate-800 font-black tracking-tighter uppercase">Match Results</h2>
+        <p className="text-slate-500 mt-1 text-sm font-medium">
+          AI identifying potential item reunions
+        </p>
       </div>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div className="flex gap-2 p-1.5 bg-white/30 backdrop-blur-xl rounded-[1.25rem] border border-white/40 shadow-sm">
@@ -205,7 +191,7 @@ export default function MatchResultsPage() {
                 : 'text-slate-400 hover:text-slate-600 hover:bg-white/50'
             }`}
           >
-            Global Discovery
+            Match History
           </button>
         </div>
 
@@ -224,9 +210,13 @@ export default function MatchResultsPage() {
           <div className="w-24 h-24 bg-pink-50 rounded-2xl flex items-center justify-center mx-auto mb-8">
             <CheckCircle size={48} className="text-pink-300" />
           </div>
-          <p className="text-slate-800 text-3xl font-black mb-3 tracking-tight uppercase">No matches found yet</p>
+          <p className="text-slate-800 text-3xl font-black mb-3 tracking-tight uppercase">
+            {viewMode === 'PERSONAL' ? 'No matches for you yet' : 'No match history yet'}
+          </p>
           <p className="text-slate-500 text-lg font-medium">
-            Our AI is continuously analyzing reports to find your belongings.
+            {viewMode === 'PERSONAL'
+              ? 'Our AI is continuously analyzing reports to find your belongings.'
+              : 'All AI-generated matches across the system will appear here.'}
           </p>
         </div>
       ) : (

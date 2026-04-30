@@ -1,94 +1,76 @@
 package com.lostfound.service;
 
-/** Force Re-Sync for Compiler **/
-
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-
-import java.lang.reflect.Method;
 
 @Service
 public class EmailService {
 
-    @Autowired
-    private ApplicationContext context;
+    // Injected directly — no reflection, no proxy issues
+    @Autowired(required = false)
+    private JavaMailSender mailSender;
 
-    public void sendMatchAlert(String toEmail, String userName, String itemName, String serialNumber) {
+    // Must match spring.mail.username in application.properties
+    @Value("${spring.mail.username:suriyasricse@gmail.com}")
+    private String fromEmail;
+
+    // ── Match Alert ─────────────────────────────────────────────────────────
+    @Async
+    public void sendMatchAlert(String toEmail, String userName, String itemName, String securityKey) {
+        if (mailSender == null) {
+            System.out.println("EMAIL SKIP: JavaMailSender not available. Would have sent to: " + toEmail);
+            return;
+        }
         try {
-            // We use reflection to find the mail sender. 
-            // This prevents the whole app from crashing if the library is still downloading.
-            Object mailSender = null;
-            try {
-                mailSender = context.getBean("mailSender");
-            } catch (Exception e) {
-                System.out.println("DEBUG EMAIL: JavaMailSender not configured or library missing. Email skipped.");
-            }
-
-            if (mailSender == null) {
-                System.out.println("DEBUG EMAIL (Mock): To: " + toEmail + " | Msg: Hello " + userName + ", we found your " + itemName);
-                return;
-            }
-
-            // If we found the sender, try to send using reflection
-            Class<?> messageClass = Class.forName("org.springframework.mail.SimpleMailMessage");
-            Object message = messageClass.getDeclaredConstructor().newInstance();
-            
-            // Set properties via reflection
-            messageClass.getMethod("setFrom", String.class).invoke(message, "no-reply@easefindai.com");
-            messageClass.getMethod("setTo", String.class).invoke(message, toEmail);
-            messageClass.getMethod("setSubject", String.class).invoke(message, "New Match Found! - EaseFind.AI");
-            messageClass.getMethod("setText", String.class).invoke(message, "Hello " + userName + ",\n\n" +
-                "Great news! Our AI Engine has found a strong potential match for the item: " + itemName + ".\n\n" +
-                "🔑 SECURITY KEY: " + (serialNumber != null ? serialNumber : "No key provided") + "\n\n" +
-                "Please log in to your dashboard to view the match results and securely interact with the other party using the key above!\n\n" +
+            SimpleMailMessage msg = new SimpleMailMessage();
+            msg.setFrom(fromEmail);           // ✅ Must match Gmail auth account
+            msg.setTo(toEmail);
+            msg.setSubject("🎯 Match Found for Your Item — EaseFind.AI");
+            msg.setText(
+                "Hello " + userName + ",\n\n" +
+                "Great news! Our AI Engine has found a strong potential match for your item: \"" + itemName + "\".\n\n" +
+                "🔑 Security Key: " + (securityKey != null ? securityKey : "N/A") + "\n\n" +
+                "Log in to your dashboard to view the match and use the key above to verify ownership.\n\n" +
+                "→ https://frontend-navy-seven-51.vercel.app/dashboard/match-results\n\n" +
                 "Best regards,\n" +
-                "The EaseFind.AI Security Team");
-
-            Method sendMethod = mailSender.getClass().getMethod("send", messageClass);
-            sendMethod.invoke(mailSender, message);
-            
-            System.out.println("SUCCESS: Email sent to " + toEmail);
-        } catch (ClassNotFoundException e) {
-            System.out.println("DEBUG EMAIL (Mock): Library not found yet. To: " + toEmail + " regarding " + itemName);
+                "The EaseFind.AI Team"
+            );
+            mailSender.send(msg);
+            System.out.println("✅ EMAIL SENT to " + toEmail + " for item: " + itemName);
         } catch (Exception e) {
-            System.err.println("FAILED to send email to " + toEmail + ": " + e.getClass().getSimpleName() + " - " + e.getMessage());
-            e.printStackTrace();
+            System.err.println("❌ EMAIL FAILED to " + toEmail + ": " + e.getMessage());
         }
     }
 
-    public void sendChatRequestAlert(String toEmail, String senderName, String itemName, String serialNumber) {
+    // ── Chat Request Alert ───────────────────────────────────────────────────
+    @Async
+    public void sendChatRequestAlert(String toEmail, String senderName, String itemName, String securityKey) {
+        if (mailSender == null) {
+            System.out.println("EMAIL SKIP: JavaMailSender not available for chat alert to: " + toEmail);
+            return;
+        }
         try {
-            Object mailSender = null;
-            try {
-                mailSender = context.getBean("mailSender");
-            } catch (Exception e) {}
-
-            if (mailSender == null) {
-                System.out.println("DEBUG EMAIL (Mock Chat): To: " + toEmail + " | Msg: " + senderName + " wants to chat about " + itemName);
-                return;
-            }
-
-            Class<?> messageClass = Class.forName("org.springframework.mail.SimpleMailMessage");
-            Object message = messageClass.getDeclaredConstructor().newInstance();
-            
-            messageClass.getMethod("setFrom", String.class).invoke(message, "no-reply@easefindai.com");
-            messageClass.getMethod("setTo", String.class).invoke(message, toEmail);
-            messageClass.getMethod("setSubject", String.class).invoke(message, "Someone wants to chat! - EaseFind.AI");
-            messageClass.getMethod("setText", String.class).invoke(message, "Hello,\n\n" +
-                senderName + " has matching results with you and wants to start a secure chat regarding the item: " + itemName + ".\n\n" +
-                "🔑 SECURITY KEY: " + (serialNumber != null ? serialNumber : "No key provided") + "\n\n" +
-                "Please log in to your dashboard and open the match chat to reply using the key above!\n\n" +
+            SimpleMailMessage msg = new SimpleMailMessage();
+            msg.setFrom(fromEmail);           // ✅ Must match Gmail auth account
+            msg.setTo(toEmail);
+            msg.setSubject("💬 Someone Wants to Chat — EaseFind.AI");
+            msg.setText(
+                "Hello,\n\n" +
+                senderName + " has a matching item and wants to start a secure chat about: \"" + itemName + "\".\n\n" +
+                "🔑 Security Key: " + (securityKey != null ? securityKey : "N/A") + "\n\n" +
+                "Log in to your dashboard to reply using the key above.\n\n" +
+                "→ https://frontend-navy-seven-51.vercel.app/dashboard/match-results\n\n" +
                 "Best regards,\n" +
-                "The EaseFind.AI Team");
-
-            Method sendMethod = mailSender.getClass().getMethod("send", messageClass);
-            sendMethod.invoke(mailSender, message);
-            
-            System.out.println("SUCCESS: Chat request email sent to " + toEmail);
+                "The EaseFind.AI Team"
+            );
+            mailSender.send(msg);
+            System.out.println("✅ CHAT EMAIL SENT to " + toEmail);
         } catch (Exception e) {
-            System.err.println("FAILED to send chat email: " + e.getMessage());
+            System.err.println("❌ CHAT EMAIL FAILED to " + toEmail + ": " + e.getMessage());
         }
     }
 }
-

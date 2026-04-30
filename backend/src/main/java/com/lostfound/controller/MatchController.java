@@ -36,6 +36,17 @@ public class MatchController {
         return matchRepo.findAll();
     }
 
+    // 🔁 Manual re-run matching on ALL existing items
+    @PostMapping("/run-all")
+    public ResponseEntity<?> runAllMatches() {
+        try {
+            List<Match> results = matchService.findMatches();
+            return ResponseEntity.ok("Matching complete. Total matches found: " + results.size());
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error running matches: " + e.getMessage());
+        }
+    }
+
     // 2️⃣ NEW AI endpoint
     @PostMapping("/check")
     public ResponseEntity<?> checkMatch(

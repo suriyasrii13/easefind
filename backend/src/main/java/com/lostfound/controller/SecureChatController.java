@@ -3,7 +3,9 @@ package com.lostfound.controller;
 import com.lostfound.entity.*;
 import com.lostfound.repository.*;
 import com.lostfound.service.EmailService;
+import com.lostfound.service.GeminiService;
 import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
@@ -38,8 +40,8 @@ public class SecureChatController {
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
 
-    @org.springframework.beans.factory.annotation.Value("${AI_SERVER_URL:http://localhost:5000}")
-    private String aiServerUrl;
+    @Autowired
+    private GeminiService geminiService;
 
     // 1. Get messages for a match (and trigger AI Bot if empty)
     @GetMapping("/{matchId}")
@@ -50,13 +52,7 @@ public class SecureChatController {
             Match match = matchRepo.findById(matchId).orElse(null);
             if (match != null) {
                 try {
-                    RestTemplate restTemplate = new RestTemplate();
-                    Map<String, String> payload = new HashMap<>();
-                    payload.put("lost_desc", match.getLostItem().getDescription());
-                    payload.put("found_desc", match.getFoundItem().getDescription());
-                    
-                    ResponseEntity<Map> response = restTemplate.postForEntity(aiServerUrl + "/moderate", payload, Map.class);
-                    String botMessage = (String) response.getBody().get("message");
+                    String botMessage = geminiService.moderateChat(match.getLostItem().getDescription(), match.getFoundItem().getDescription());
                     
                     ChatMessage botChat = new ChatMessage();
                     botChat.setMatchId(matchId);

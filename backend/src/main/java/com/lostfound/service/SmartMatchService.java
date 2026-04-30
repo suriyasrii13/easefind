@@ -95,7 +95,8 @@ public class SmartMatchService {
             System.err.println("AI: Skipping match check - one of the items has a null owner/finder.");
             return;
         }
-        if (lost.getUser().getUserId().equals(found.getFinder().getUserId())) return;
+        // Allow same-user matches (useful for admins and testing)
+        // Users can still distinguish their own items in the UI
         
         if (lost.getItemName() == null || found.getItemName() == null) {
             System.err.println("AI: Skipping match check - one of the items has a null name.");
@@ -168,7 +169,10 @@ public class SmartMatchService {
     }
 
     private void saveMatchAndNotify(LostItem lost, FoundItem found, double confidence, String reason) {
-        if (matchRepo.existsByLostItemAndFoundItem(lost, found)) return;
+        if (matchRepo.existsByLostItemAndFoundItem(lost, found)) {
+            System.out.println("MATCH SKIP: Already exists for [" + lost.getItemName() + "] <-> [" + found.getItemName() + "]");
+            return;
+        }
 
         Match match = new Match();
         match.setLostItem(lost);
@@ -183,22 +187,34 @@ public class SmartMatchService {
             securityKey = java.util.UUID.randomUUID().toString().substring(0, 6).toUpperCase();
         }
         match.setSecurityKey(securityKey);
-        
         match = matchRepo.save(match);
 
-        notifyUser(lost.getUser().getUserId(), match.getMatchId(), "We found an item that might be your lost " + lost.getItemName() + "! Please check your email for the security verification key.");
-        notifyUser(found.getFinder().getUserId(), match.getMatchId(), "Your found item '" + found.getItemName() + "' matches a lost report! Please check your email for the security verification key.");
+        System.out.println("✅ MATCH SAVED: ID=" + match.getMatchId() + " [" + lost.getItemName() + "] <-> [" + found.getItemName() + "] confidence=" + confidence);
 
+        // Notify both parties
+        Long lostUserId  = lost.getUser().getUserId();
+        Long foundUserId = found.getFinder().getUserId();
+        String lostEmail  = lost.getUser().getEmail();
+        String foundEmail = found.getFinder().getEmail();
+
+        notifyUser(lostUserId,  match.getMatchId(), "We found an item that might be your lost " + lost.getItemName() + "! Your security key is: " + match.getSecurityKey());
+        notifyUser(foundUserId, match.getMatchId(), "Your found item '" + found.getItemName() + "' matches a lost report! Security key: " + match.getSecurityKey());
+
+        // Send emails
         try {
-            emailService.sendMatchAlert(lost.getUser().getEmail(), lost.getUser().getName(), lost.getItemName(), match.getSecurityKey());
-            emailService.sendMatchAlert(found.getFinder().getEmail(), found.getFinder().getName(), found.getItemName(), match.getSecurityKey());
+            System.out.println("📧 Sending match email to lost-owner: " + lostEmail);
+            emailService.sendMatchAlert(lostEmail,  lost.getUser().getName(),    lost.getItemName(),  match.getSecurityKey());
+            System.out.println("📧 Sending match email to finder:     " + foundEmail);
+            emailService.sendMatchAlert(foundEmail, found.getFinder().getName(), found.getItemName(), match.getSecurityKey());
         } catch (Exception e) {
-            System.err.println("AI ERROR: Failed to send Gmail alerts: " + e.getMessage());
+            System.err.println("❌ EMAIL ERROR: " + e.getMessage());
         }
     }
 
     private void notifyUser(Long userId, Long matchId, String message) {
+        System.out.println("🔔 NOTIFY: userId=" + userId + " matchId=" + matchId);
         if (notificationRepo.existsByRecipientIdAndMatchIdAndType(userId, matchId, "MATCH")) {
+            System.out.println("  → Notification already exists, skipping duplicate.");
             return;
         }
 
@@ -206,13 +222,17 @@ public class SmartMatchService {
         notification.setRecipientId(userId);
         notification.setMatchId(matchId);
         notification.setType("MATCH");
-        notification.setTitle("New Potential Match!");
+        notification.setTitle("🎯 New Potential Match!");
         notification.setMessage(message);
         notification.setActionText("View Match");
         notification.setActionUrl("/dashboard/match-results?matchId=" + matchId);
         notification.setCreatedAt(java.time.LocalDateTime.now());
         notificationRepo.save(notification);
+        System.out.println("  → Notification saved to DB ✅");
+
+        // Push real-time WebSocket toast
         messagingTemplate.convertAndSend("/topic/user_" + userId, notification);
+        System.out.println("  → WebSocket push sent to /topic/user_" + userId + " ✅");
     }
 
     @Transactional
