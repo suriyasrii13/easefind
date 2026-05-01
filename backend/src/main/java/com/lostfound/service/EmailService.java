@@ -15,7 +15,7 @@ public class EmailService {
     private JavaMailSender mailSender;
 
     // Must match spring.mail.username in application.properties
-    @Value("${spring.mail.username:suriyasricse@gmail.com}")
+    @Value("${spring.mail.username:easyfind.ai@gmail.com}")
     private String fromEmail;
 
     // ── Match Alert ─────────────────────────────────────────────────────────

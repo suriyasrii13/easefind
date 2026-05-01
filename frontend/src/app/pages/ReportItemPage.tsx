@@ -33,7 +33,8 @@ export default function ReportItemPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [isParsing, setIsParsing] = useState(false);
-
+  const [isTextMode, setIsTextMode] = useState(false);
+  const [manualText, setManualText] = useState('');
   const [isClearModalOpen, setIsClearModalOpen] = useState(false);
 
   const categories = ['Electronics', 'Personal Items', 'Documents', 'Accessories', 'Clothing', 'Keys', 'Bags', 'Jewelry', 'Other'];
@@ -76,9 +77,46 @@ export default function ReportItemPage() {
     }
   };
 
+  const handleManualParse = async () => {
+    if (!manualText.trim()) {
+      toast.error("Please enter some text for the AI to parse.");
+      return;
+    }
+    setIsParsing(true);
+    try {
+      const res = await fetch(`${BASE_URL}/voice/parse`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: manualText })
+      });
+      
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.suggestion || errData.error || "AI Service is offline or unreachable.");
+      }
+      
+      const data = await res.json();
+      if (data.itemName) setItemName(data.itemName);
+      if (data.category && categories.includes(data.category)) setCategory(data.category);
+      if (data.description) setDescription(data.description);
+      if (data.location) setLocation(data.location);
+      if (data.date) setDate(data.date);
+      if (data.itemType) setItemType(data.itemType);
+      
+      toast.success("AI has filled the details successfully!");
+      setIsTextMode(false);
+      setManualText('');
+    } catch (e: any) {
+      toast.error("AI Parsing Failed", { description: e.message });
+    } finally {
+      setIsParsing(false);
+    }
+  };
+
   const handleVoiceAssistant = () => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-      toast.error("Voice recognition not supported");
+      toast.error("Voice recognition not supported. Please use manual type mode.");
+      setIsTextMode(true);
       return;
     }
     const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
@@ -129,13 +167,14 @@ export default function ReportItemPage() {
       console.error("Speech Recognition Error:", event.error);
       if (event.error === 'not-allowed' || event.error === 'permission-denied') {
         toast.error("Microphone Access Denied", { 
-          description: "Chrome has blocked the microphone. Please click the 'Lock' icon in your address bar and set Microphone to 'Allow'.",
+          description: "Please allow microphone access or use manual type mode.",
           duration: 6000 
         });
       } else if (event.error === 'network') {
-        toast.error("Network Error", { description: "Please check your internet connection and try again." });
+        toast.error("Network Error", { description: "Browser speech service is unavailable. Switching to manual type mode." });
+        setIsTextMode(true);
       } else {
-        toast.error("Voice Recognition Error", { description: `Error: ${event.error}. Please try again.` });
+        toast.error("Voice Recognition Error", { description: `Error: ${event.error}.` });
       }
     };
     recognition.onend = () => {
@@ -208,17 +247,49 @@ export default function ReportItemPage() {
             </h2>
             <p className="text-slate-500 font-medium mt-1 text-xs">Intelligent Intelligence Protocol</p>
           </div>
-          <Button
-            type="button"
-            onClick={handleVoiceAssistant}
-            disabled={isListening || isParsing}
-            className={`rounded-2xl px-6 py-6 transition-all ${
-              isListening ? "bg-pink-500 animate-pulse" : "bg-sky-500 hover:bg-sky-600"
-            } text-white shadow-lg flex items-center gap-3`}
-          >
-            {isParsing ? <Loader2 className="animate-spin" size={20} /> : <Mic size={20} />}
-            <span className="font-black text-[10px] uppercase tracking-widest">{isParsing ? "Parsing..." : isListening ? "Listening..." : "AI Assist"}</span>
-          </Button>
+          <div className="flex flex-col items-end gap-2">
+            <div className="flex gap-2">
+               <Button
+                type="button"
+                onClick={() => setIsTextMode(!isTextMode)}
+                className={`rounded-2xl w-12 h-12 transition-all ${
+                  isTextMode ? "bg-pink-500 text-white" : "bg-white text-slate-400 border border-pink-100"
+                } shadow-md flex items-center justify-center`}
+                title="Type mode"
+              >
+                <Sparkles size={18} />
+              </Button>
+              <Button
+                type="button"
+                onClick={handleVoiceAssistant}
+                disabled={isListening || isParsing}
+                className={`rounded-2xl px-6 py-6 transition-all ${
+                  isListening ? "bg-pink-500 animate-pulse" : "bg-sky-500 hover:bg-sky-600"
+                } text-white shadow-lg flex items-center gap-3`}
+              >
+                {isParsing ? <Loader2 className="animate-spin" size={20} /> : <Mic size={20} />}
+                <span className="font-black text-[10px] uppercase tracking-widest">{isParsing ? "Parsing..." : isListening ? "Listening..." : "AI Assist"}</span>
+              </Button>
+            </div>
+            {isTextMode && (
+              <div className="flex gap-2 animate-in fade-in slide-in-from-right-2">
+                <Input 
+                  value={manualText}
+                  onChange={(e) => setManualText(e.target.value)}
+                  placeholder="Describe your item (e.g. Lost my blue wallet today at library)"
+                  className="bg-white/80 border-pink-100 text-[10px] py-4 rounded-xl shadow-sm w-64"
+                  onKeyDown={(e) => e.key === 'Enter' && handleManualParse()}
+                />
+                <Button 
+                  onClick={handleManualParse}
+                  disabled={isParsing}
+                  className="bg-slate-800 text-white text-[9px] font-black uppercase tracking-widest rounded-xl px-4"
+                >
+                  Parse
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="flex gap-3 mb-8 bg-white/40 p-1.5 rounded-2xl border border-pink-50 shadow-sm">

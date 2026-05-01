@@ -41,3 +41,6 @@ venv/
 dataset/
 # Database Data
 mysql_data/
+
+# Sensitive Configs
+backend/src/main/resources/application.properties

@@ -16,7 +16,8 @@ import java.util.*;
 @Service
 public class GeminiService {
 
-    private static final String DEFAULT_MODEL = "gemini-flash-latest";
+    private static final String DEFAULT_MODEL = "gemini-3.1-flash-tts-preview";
+    private static final String FALLBACK_MODEL = "gemini-2.5-flash";
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
     private final String apiKey;
@@ -25,23 +26,9 @@ public class GeminiService {
         this.webClient = WebClient.builder().build(); // No baseUrl, we will use absolute URLs
         this.objectMapper = new ObjectMapper();
         this.apiKey = apiKey;
-        listAvailableModels(); // List models on startup to help debugging
     }
 
-    private void listAvailableModels() {
-        if (apiKey == null || apiKey.isEmpty()) return;
-        try {
-            System.out.println("GEMINI_API -> Listing available models...");
-            String response = webClient.get()
-                    .uri("https://generativelanguage.googleapis.com/v1beta/models?key=" + apiKey)
-                    .retrieve()
-                    .bodyToMono(String.class)
-                    .block();
-            System.out.println("GEMINI_API -> Available Models: " + response);
-        } catch (Exception e) {
-            System.err.println("GEMINI_API -> Could not list models: " + e.getMessage());
-        }
-    }
+
 
 
 
@@ -56,36 +43,55 @@ public class GeminiService {
         try {
             return executeCall(model, requestBody);
         } catch (Exception e) {
-            System.err.println("GEMINI_API -> " + model + " failed, trying fallback gemini-2.0-flash...");
+            System.err.println("GEMINI_API -> " + model + " failed (" + e.getMessage() + "), trying fallback " + FALLBACK_MODEL + "...");
             try {
-                return executeCall("gemini-2.0-flash", requestBody);
+                return executeCall(FALLBACK_MODEL, requestBody);
             } catch (Exception e2) {
-
-                System.err.println("GEMINI_API_FATAL: Both flash and pro failed.");
+                System.err.println("GEMINI_API_FATAL: Both models failed. Reason: " + e2.getMessage());
                 throw new RuntimeException("Gemini API failed: " + e2.getMessage());
             }
         }
     }
 
     private String executeCall(String model, Map<String, Object> requestBody) throws Exception {
-        System.out.println("GEMINI_API -> Calling v1beta model: " + model);
+        System.out.println("GEMINI_API -> Requesting model: " + model);
+        // Using v1beta which is required for these specific models
         String url = "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent?key=" + apiKey;
         
-        String responseStr = webClient.post()
-                .uri(url)
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .bodyValue(requestBody)
-                .retrieve()
-                .bodyToMono(String.class)
-                .block();
+        try {
+            String responseStr = webClient.post()
+                    .uri(url)
+                    .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                    .bodyValue(requestBody)
+                    .retrieve()
+                    .onStatus(status -> status.isError(), clientResponse -> 
+                        clientResponse.bodyToMono(String.class).flatMap(errorBody -> {
+                            System.err.println("GEMINI_API_ERROR_BODY: " + errorBody);
+                            return Mono.error(new RuntimeException(errorBody));
+                        })
+                    )
+                    .bodyToMono(String.class)
+                    .block();
 
-        JsonNode root = objectMapper.readTree(responseStr);
-        String rawText = root.path("candidates").get(0).path("content").path("parts").get(0).path("text").asText();
-        
-        if (rawText.contains("{") && rawText.contains("}")) {
-            return rawText.substring(rawText.indexOf("{"), rawText.lastIndexOf("}") + 1);
+            JsonNode root = objectMapper.readTree(responseStr);
+            JsonNode candidates = root.path("candidates");
+            if (candidates.isMissingNode() || candidates.isEmpty()) {
+                throw new RuntimeException("No candidates. Response: " + responseStr);
+            }
+
+            String rawText = candidates.get(0).path("content").path("parts").get(0).path("text").asText();
+            
+            if (rawText.contains("{") && rawText.contains("}")) {
+                return rawText.substring(rawText.indexOf("{"), rawText.lastIndexOf("}") + 1);
+            }
+            return rawText;
+        } catch (Exception e) {
+            // If we hit 429, wait 1 second before the fallback in callGemini
+            if (e.getMessage().contains("429")) {
+                Thread.sleep(1000); 
+            }
+            throw e;
         }
-        return rawText;
     }
 
 
@@ -111,7 +117,7 @@ public class GeminiService {
         String systemPrompt = "You are a helpful AI assistant for the 'EaseFind' Smart Lost & Found system. " +
                 "Help users report lost or found items, explain how AI matching works, and guide them on claiming items. " +
                 "Keep responses concise, friendly, and formatted nicely.";
-        return callGemini("gemini-1.5-flash", createTextRequest(systemPrompt, query));
+        return callGemini(DEFAULT_MODEL, createTextRequest(systemPrompt, query));
     }
 
     public String parseVoice(String transcript) {
@@ -122,7 +128,7 @@ public class GeminiService {
                 "- itemType (either 'lost' or 'found')\n" +
                 "Return ONLY a raw JSON object with keys: itemName, category, description (just the original transcript), location, itemType. Do not wrap in markdown tags.";
         
-        return callGemini("gemini-1.5-flash", createTextRequest(systemPrompt, transcript));
+        return callGemini(DEFAULT_MODEL, createTextRequest(systemPrompt, transcript));
     }
 
 
@@ -132,7 +138,7 @@ public class GeminiService {
                 "If no strong common traits exist, give a generic security warning to verify details.";
         
         String userText = "Lost Item: " + lostDesc + "\nFound Item: " + foundDesc;
-        return callGemini("gemini-1.5-flash", createTextRequest(systemPrompt, userText));
+        return callGemini(DEFAULT_MODEL, createTextRequest(systemPrompt, userText));
     }
 
     public String evaluateMatch(File lostImage, File foundImage, String lostDesc, String foundDesc) {
@@ -178,7 +184,7 @@ public class GeminiService {
         content.put("parts", parts);
         request.put("contents", List.of(content));
 
-        String jsonResult = callGemini("gemini-1.5-flash", request);
+        String jsonResult = callGemini(DEFAULT_MODEL, request);
         return jsonResult.replaceAll("```json", "").replaceAll("```", "").trim();
     }
 
@@ -212,7 +218,7 @@ public class GeminiService {
         content.put("parts", parts);
         request.put("contents", List.of(content));
 
-        String jsonResult = callGemini("gemini-1.5-flash", request);
+        String jsonResult = callGemini(DEFAULT_MODEL, request);
         return jsonResult.replaceAll("```json", "").replaceAll("```", "").trim();
     }
 }
