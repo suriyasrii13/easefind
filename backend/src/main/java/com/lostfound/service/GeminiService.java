@@ -122,11 +122,12 @@ public class GeminiService {
 
     public String parseVoice(String transcript) {
         String systemPrompt = "You are an entity extractor for a lost and found system. Extract the following from the transcript:\n" +
-                "- itemName (string, capitalize)\n" +
-                "- category (must be one of: Electronics, Personal Items, Documents, Accessories, Clothing, Keys, Bags, Jewelry, Other)\n" +
-                "- location (string, typical campus location like Classroom, Library, Canteen, etc., or generic)\n" +
+                "- itemName (string, capitalize, e.g., 'IPhone 13')\n" +
+                "- category (must be exactly one of: Electronics, Personal Items, Documents, Accessories, Clothing, Keys, Bags, Jewelry, Other)\n" +
+                "- location (typical campus location like Classroom, Library, Canteen, etc.)\n" +
                 "- itemType (either 'lost' or 'found')\n" +
-                "Return ONLY a raw JSON object with keys: itemName, category, description (just the original transcript), location, itemType. Do not wrap in markdown tags.";
+                "- date (extract if mentioned, e.g., 'today', 'yesterday', or a specific date. Format as YYYY-MM-DD. Use today's date " + java.time.LocalDate.now().toString() + " if relative terms like 'today' are used. If no date mentioned, omit this key.)\n" +
+                "Return ONLY a raw JSON object with keys: itemName, category, description (original transcript), location, itemType, date. Do not wrap in markdown tags.";
         
         return callGemini(DEFAULT_MODEL, createTextRequest(systemPrompt, transcript));
     }

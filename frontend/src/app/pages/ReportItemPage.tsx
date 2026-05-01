@@ -97,7 +97,13 @@ export default function ReportItemPage() {
       
       const data = await res.json();
       if (data.itemName) setItemName(data.itemName);
-      if (data.category && categories.includes(data.category)) setCategory(data.category);
+      
+      // Robust category matching
+      if (data.category) {
+        const matchedCat = categories.find(c => c.toLowerCase() === data.category.toLowerCase());
+        if (matchedCat) setCategory(matchedCat);
+      }
+      
       if (data.description) setDescription(data.description);
       if (data.location) setLocation(data.location);
       if (data.date) setDate(data.date);
@@ -144,7 +150,13 @@ export default function ReportItemPage() {
         
         const data = await res.json();
         if (data.itemName) setItemName(data.itemName);
-        if (data.category && categories.includes(data.category)) setCategory(data.category);
+        
+        // Robust category matching
+        if (data.category) {
+          const matchedCat = categories.find(c => c.toLowerCase() === data.category.toLowerCase());
+          if (matchedCat) setCategory(matchedCat);
+        }
+        
         if (data.description) setDescription(data.description);
         if (data.location) setLocation(data.location);
         if (data.date) setDate(data.date);
