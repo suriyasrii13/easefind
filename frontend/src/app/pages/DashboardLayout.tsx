@@ -147,7 +147,7 @@ export default function DashboardLayout() {
         <div className="max-w-[1600px] mx-auto flex items-center justify-between h-full px-8 relative z-10">
           <div className="flex items-center cursor-pointer" onClick={() => navigate('/dashboard')}>
             <span className="text-2xl font-black tracking-tighter text-slate-800">EaseFind<span className="text-sky-500">.AI</span></span>
-            <span className="ml-3 px-2 py-1 bg-sky-500/10 text-sky-500 text-[10px] font-black rounded-lg border border-sky-100 uppercase tracking-tighter">v1.2 - Optimized</span>
+            <span className="ml-3 px-2 py-1 bg-sky-500/10 text-sky-500 text-[10px] font-black rounded-lg border border-sky-100 uppercase tracking-tighter">v1.3 - AI REBORN</span>
           </div>
 
           <div className="hidden md:flex items-center gap-10">
