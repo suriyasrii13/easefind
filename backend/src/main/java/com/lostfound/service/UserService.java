@@ -23,6 +23,9 @@ public class UserService {
     @Autowired
     private BCryptPasswordEncoder encoder;
 
+    @Autowired
+    private EmailService emailService;
+
     public User register(User user) {
 
         if (user.getPassword() == null || user.getPassword().isBlank()) {
@@ -39,7 +42,15 @@ public class UserService {
             user.setRole("USER");
         }
 
-        return userRepository.save(user);
+        User savedUser = userRepository.save(user);
+        
+        try {
+            emailService.sendWelcomeEmail(savedUser.getEmail(), savedUser.getName());
+        } catch (Exception e) {
+            System.err.println("EMAIL_ERROR: Failed to send welcome email: " + e.getMessage());
+        }
+        
+        return savedUser;
     }
 
     public Optional<User> login(String email, String password) {

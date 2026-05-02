@@ -34,6 +34,9 @@ public class ItemController {
     @Autowired
     private com.lostfound.service.SmartMatchService matchService;
 
+    @Autowired
+    private com.lostfound.service.EmailService emailService;
+
     // ---------------- LOST ITEMS ----------------
 
     @PostMapping(value = "/lost-items", consumes = "multipart/form-data")
@@ -80,16 +83,21 @@ public class ItemController {
             LostItem savedItem = lostItemService.saveLostItem(item);
             System.out.println("DEBUG Submission: SUCCESS saving Lost Item Id: " + savedItem.getItemId());
 
-            // --- AUTOMATED MATCHING HOOK (runs in background, does NOT block response) ---
-            final LostItem finalSavedItem = savedItem;
             CompletableFuture.runAsync(() -> {
                 try {
                     matchService.processNewLostItem(finalSavedItem);
                     System.out.println("AI: Background matching complete for LOST item: " + itemName);
                 } catch (Exception e) {
-                    System.err.println("AI: Background scan failed (item was already saved): " + e.getMessage());
+                    System.err.println("AI: Background scan failed: " + e.getMessage());
                 }
             });
+
+            // --- EMAIL CONFIRMATION ---
+            try {
+                emailService.sendReportConfirmation(user.getEmail(), user.getName(), itemName, "LOST");
+            } catch (Exception e) {
+                System.err.println("EMAIL_ERROR: Failed to send lost report confirmation: " + e.getMessage());
+            }
 
             return ResponseEntity.ok(savedItem);
         } catch (Exception e) {
@@ -157,16 +165,21 @@ public class ItemController {
             FoundItem savedItem = foundItemService.save(item);
             System.out.println("DEBUG Submission: SUCCESS saving Found Item Id: " + savedItem.getItemId());
 
-            // --- AUTOMATED MATCHING HOOK (runs in background, does NOT block response) ---
-            final FoundItem finalSavedItem = savedItem;
             CompletableFuture.runAsync(() -> {
                 try {
                     matchService.processNewFoundItem(finalSavedItem);
                     System.out.println("AI: Background matching complete for FOUND item: " + itemName);
                 } catch (Exception e) {
-                    System.err.println("AI: Background scan failed (item was already saved): " + e.getMessage());
+                    System.err.println("AI: Background scan failed: " + e.getMessage());
                 }
             });
+
+            // --- EMAIL CONFIRMATION ---
+            try {
+                emailService.sendReportConfirmation(finder.getEmail(), finder.getName(), itemName, "FOUND");
+            } catch (Exception e) {
+                System.err.println("EMAIL_ERROR: Failed to send found report confirmation: " + e.getMessage());
+            }
 
             return ResponseEntity.ok(savedItem);
 

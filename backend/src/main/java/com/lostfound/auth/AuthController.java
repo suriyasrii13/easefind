@@ -76,6 +76,12 @@ public class AuthController {
         try {
             String token = java.util.UUID.randomUUID().toString();
             userService.generatePasswordResetToken(email, token);
+            
+            try {
+                emailService.sendPasswordResetEmail(email, token);
+            } catch (Exception e) {
+                System.err.println("EMAIL_ERROR: Failed to send reset email: " + e.getMessage());
+            }
 
             response.put("status", "success");
             response.put("message", "Password reset link generated!");

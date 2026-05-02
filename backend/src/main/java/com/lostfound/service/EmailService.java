@@ -73,4 +73,85 @@ public class EmailService {
             System.err.println("❌ CHAT EMAIL FAILED to " + toEmail + ": " + e.getMessage());
         }
     }
+    // ── Report Confirmation ──────────────────────────────────────────────────
+    @Async
+    public void sendReportConfirmation(String toEmail, String userName, String itemName, String type) {
+        if (mailSender == null) {
+            System.out.println("EMAIL SKIP: JavaMailSender not available for report confirmation to: " + toEmail);
+            return;
+        }
+        try {
+            SimpleMailMessage msg = new SimpleMailMessage();
+            msg.setFrom(fromEmail);
+            msg.setTo(toEmail);
+            msg.setSubject("📋 Item Report Received — EaseFind.AI");
+            msg.setText(
+                "Hello " + userName + ",\n\n" +
+                "This is a confirmation that we have successfully received your " + type + " item report for: \"" + itemName + "\".\n\n" +
+                "Our AI Engine is now scanning the database for potential matches. You will receive another email if a match is found.\n\n" +
+                "Log in to your dashboard to track the status of your report.\n\n" +
+                "→ https://frontend-navy-seven-51.vercel.app/dashboard/history\n\n" +
+                "Best regards,\n" +
+                "The EaseFind.AI Team"
+            );
+            mailSender.send(msg);
+            System.out.println("✅ CONFIRMATION EMAIL SENT to " + toEmail);
+        } catch (Exception e) {
+            System.err.println("❌ CONFIRMATION EMAIL FAILED: " + e.getMessage());
+        }
+    }
+
+    // ── Welcome Email ───────────────────────────────────────────────────────
+    @Async
+    public void sendWelcomeEmail(String toEmail, String userName) {
+        if (mailSender == null) return;
+        try {
+            SimpleMailMessage msg = new SimpleMailMessage();
+            msg.setFrom(fromEmail);
+            msg.setTo(toEmail);
+            msg.setSubject("👋 Welcome to EaseFind.AI — Let's Find Your Items!");
+            msg.setText(
+                "Hello " + userName + ",\n\n" +
+                "Welcome to EaseFind.AI, the smartest way to recover lost items on campus.\n\n" +
+                "You can now report lost items, browse found items, and use our AI Assistant to help you through the process.\n\n" +
+                "Get started here:\n" +
+                "→ https://frontend-navy-seven-51.vercel.app/login\n\n" +
+                "Best regards,\n" +
+                "The EaseFind.AI Team"
+            );
+            mailSender.send(msg);
+            System.out.println("✅ WELCOME EMAIL SENT to " + toEmail);
+        } catch (Exception e) {
+            System.err.println("❌ WELCOME EMAIL FAILED: " + e.getMessage());
+        }
+    }
+
+    // ── Password Reset Email ────────────────────────────────────────────────
+    @Async
+    public void sendPasswordResetEmail(String toEmail, String token) {
+        if (mailSender == null) return;
+        try {
+            SimpleMailMessage msg = new SimpleMailMessage();
+            msg.setFrom(fromEmail);
+            msg.setTo(toEmail);
+            msg.setSubject("🔐 Password Reset Request — EaseFind.AI");
+            
+            // In a real app, this would be a full link: https://.../reset-password?token=XYZ
+            String resetUrl = "https://frontend-navy-seven-51.vercel.app/reset-password?token=" + token;
+            
+            msg.setText(
+                "Hello,\n\n" +
+                "You requested a password reset for your EaseFind.AI account.\n\n" +
+                "Please click the link below to set a new password. This link will expire in 1 hour.\n\n" +
+                "→ " + resetUrl + "\n\n" +
+                "If you did not request this, you can safely ignore this email.\n\n" +
+                "Best regards,\n" +
+                "The EaseFind.AI Team"
+            );
+            mailSender.send(msg);
+            System.out.println("✅ PASSWORD RESET EMAIL SENT to " + toEmail);
+        } catch (Exception e) {
+            System.err.println("❌ RESET EMAIL FAILED: " + e.getMessage());
+        }
+    }
 }

@@ -36,10 +36,21 @@ public class VoiceController {
 
         } catch (Exception e) {
             System.err.println("VOICE_AI_ERROR: " + e.getMessage());
+            String errorMsg = e.getMessage();
+            String suggestion = "Check your Gemini API Key and internet connection.";
+            
+            if (errorMsg != null && errorMsg.contains("404")) {
+                suggestion = "AI Model not found. Please ensure you are using a valid Gemini model name.";
+            } else if (errorMsg != null && errorMsg.contains("401")) {
+                suggestion = "Invalid API Key. Please check your GEMINI_API_KEY environment variable.";
+            } else if (errorMsg != null && errorMsg.contains("429")) {
+                suggestion = "API Rate limit exceeded. Please wait a moment and try again.";
+            }
+
             return ResponseEntity.status(500).body(Map.of(
                 "error", "AI Service Connection Failed",
-                "details", e.getMessage(),
-                "suggestion", "Check your Gemini API Key and internet connection."
+                "details", errorMsg != null ? errorMsg : "Unknown error",
+                "suggestion", suggestion
             ));
         }
     }
