@@ -1,7 +1,7 @@
 package com.lostfound.entity;
 
 import jakarta.persistence.*;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Entity
 @Table(name = "app_notifications")
@@ -19,10 +19,10 @@ public class Notification {
     private String actionUrl;
     private String actionText;
     private boolean isRead = false;
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
     public Notification() {
-        this.createdAt = LocalDateTime.now();
+        this.createdAt = Instant.now();
     }
 
     // Getters and Setters
@@ -53,6 +53,6 @@ public class Notification {
     public boolean isRead() { return isRead; }
     public void setRead(boolean read) { isRead = read; }
 
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public Instant getCreatedAt() { return createdAt; }
+    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
 }

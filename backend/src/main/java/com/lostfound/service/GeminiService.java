@@ -25,7 +25,7 @@ public class GeminiService {
     public GeminiService(@Value("${gemini.api.key:}") String apiKey) {
         this.webClient = WebClient.builder().build(); // No baseUrl, we will use absolute URLs
         this.objectMapper = new ObjectMapper();
-        this.apiKey = apiKey;
+        this.apiKey = apiKey != null ? apiKey.trim() : null;
     }
 
 
