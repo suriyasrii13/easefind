@@ -16,8 +16,8 @@ import java.util.*;
 @Service
 public class GeminiService {
 
-    private static final String DEFAULT_MODEL = "gemini-1.5-flash";
-    private static final String FALLBACK_MODEL = "gemini-1.5-pro";
+    private static final String DEFAULT_MODEL = "gemini-pro";
+    private static final String FALLBACK_MODEL = "gemini-1.5-flash";
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
     private final String apiKey;
