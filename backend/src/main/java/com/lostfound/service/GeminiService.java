@@ -16,8 +16,8 @@ import java.util.*;
 @Service
 public class GeminiService {
 
-    private static final String DEFAULT_MODEL = "gemini-pro";
-    private static final String FALLBACK_MODEL = "gemini-1.5-flash";
+    private static final String DEFAULT_MODEL = "gemini-1.5-flash";
+    private static final String FALLBACK_MODEL = "gemini-pro";
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
     private final String apiKey;
@@ -56,7 +56,8 @@ public class GeminiService {
     private String executeCall(String model, Map<String, Object> requestBody) throws Exception {
         System.out.println("GEMINI_API -> Requesting model: " + model);
         // Using v1beta which is required for these specific models
-        String url = "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent?key=" + apiKey;
+        // Using v1 (stable) instead of v1beta for better compatibility
+        String url = "https://generativelanguage.googleapis.com/v1/models/" + model + ":generateContent?key=" + apiKey;
         
         try {
             String responseStr = webClient.post()
