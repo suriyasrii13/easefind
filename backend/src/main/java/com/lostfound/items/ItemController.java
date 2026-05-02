@@ -83,6 +83,8 @@ public class ItemController {
             LostItem savedItem = lostItemService.saveLostItem(item);
             System.out.println("DEBUG Submission: SUCCESS saving Lost Item Id: " + savedItem.getItemId());
 
+            // --- AUTOMATED MATCHING HOOK ---
+            final LostItem finalSavedItem = savedItem;
             CompletableFuture.runAsync(() -> {
                 try {
                     matchService.processNewLostItem(finalSavedItem);
@@ -165,6 +167,8 @@ public class ItemController {
             FoundItem savedItem = foundItemService.save(item);
             System.out.println("DEBUG Submission: SUCCESS saving Found Item Id: " + savedItem.getItemId());
 
+            // --- AUTOMATED MATCHING HOOK ---
+            final FoundItem finalSavedItem = savedItem;
             CompletableFuture.runAsync(() -> {
                 try {
                     matchService.processNewFoundItem(finalSavedItem);

@@ -197,8 +197,8 @@ public class SmartMatchService {
         String lostEmail  = lost.getUser().getEmail();
         String foundEmail = found.getFinder().getEmail();
 
-        notifyUser(lostUserId,  match.getMatchId(), "We found an item that might be your lost " + lost.getItemName() + "! Your security key is: " + match.getSecurityKey());
-        notifyUser(foundUserId, match.getMatchId(), "Your found item '" + found.getItemName() + "' matches a lost report! Security key: " + match.getSecurityKey());
+        notifyUser(lostUserId,  match.getMatchId(), "We found an item that might be your lost " + lost.getItemName() + "! Check your email for the security key.");
+        notifyUser(foundUserId, match.getMatchId(), "Your found item '" + found.getItemName() + "' matches a lost report! Check your email for the security key.");
 
         // Send emails
         try {
