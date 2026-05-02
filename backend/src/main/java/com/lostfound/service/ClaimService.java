@@ -118,7 +118,6 @@ public class ClaimService {
         notification.setMessage(message);
         notification.setActionText("View Status");
         notification.setActionUrl(url);
-        notification.setCreatedAt(LocalDateTime.now());
         notificationRepository.save(notification);
         messagingTemplate.convertAndSend("/topic/user_" + userId, notification);
     }

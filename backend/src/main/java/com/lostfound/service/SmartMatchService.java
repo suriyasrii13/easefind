@@ -70,7 +70,6 @@ public class SmartMatchService {
         globalAlert.setMessage("Someone just reported finding a '" + found.getItemName() + "' at '" + found.getLocation() + "'.");
         globalAlert.setActionText("View Items");
         globalAlert.setActionUrl("/dashboard/found-items");
-        globalAlert.setCreatedAt(java.time.LocalDateTime.now());
         notificationRepo.save(globalAlert);
         messagingTemplate.convertAndSend("/topic/global", globalAlert);
 
@@ -226,7 +225,6 @@ public class SmartMatchService {
         notification.setMessage(message);
         notification.setActionText("View Match");
         notification.setActionUrl("/dashboard/match-results?matchId=" + matchId);
-        notification.setCreatedAt(java.time.LocalDateTime.now());
         notificationRepo.save(notification);
         System.out.println("  → Notification saved to DB ✅");
 

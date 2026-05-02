@@ -97,7 +97,6 @@ public class SecureChatController {
                 notification.setMessage(sender.getName() + " sent you a message about: " + match.getLostItem().getItemName());
                 notification.setActionText("Reply");
                 notification.setActionUrl("/dashboard/match-results");
-                notification.setCreatedAt(LocalDateTime.now());
                 notificationRepo.save(notification);
                 messagingTemplate.convertAndSend("/topic/user_" + recipientId, notification);
             }
