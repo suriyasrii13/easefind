@@ -35,7 +35,7 @@ export default function AIChatPanel({ isOpen, onClose }: AIChatPanelProps) {
     } catch (e) {
       console.error("AI Chat Error:", e);
       setMessages(prev => [...prev, { 
-        text: "I'm having trouble connecting to my neural network. 🧠\n\nPlease ensure the AI Service is running on port 5000 and the backend is correctly configured.", 
+        text: "I'm having trouble connecting to my neural network. 🧠\n\nPlease ensure the backend service is reachable and your AI configurations are active.", 
         isUser: false 
       }]);
     } finally {
