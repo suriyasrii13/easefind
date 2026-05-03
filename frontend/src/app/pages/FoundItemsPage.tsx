@@ -119,14 +119,24 @@ export default function FoundItemsPage() {
         </div>
         <div className="flex gap-3">
           <Button 
-            onClick={() => setShowGlobal(!showGlobal)}
+            onClick={() => setShowGlobal(false)}
+            className={`px-6 py-3 rounded-xl transition-all font-black uppercase tracking-widest text-[9px] shadow-sm border ${
+              !showGlobal 
+                ? "bg-pink-500 text-white border-pink-400" 
+                : "bg-white text-slate-500 border-sky-100 hover:bg-slate-50"
+            }`}
+          >
+            Personal Records
+          </Button>
+          <Button 
+            onClick={() => setShowGlobal(true)}
             className={`px-6 py-3 rounded-xl transition-all font-black uppercase tracking-widest text-[9px] shadow-sm border ${
               showGlobal 
                 ? "bg-pink-500 text-white border-pink-400" 
-                : "bg-white text-slate-500 border-sky-100"
+                : "bg-white text-slate-500 border-sky-100 hover:bg-slate-50"
             }`}
           >
-            {showGlobal ? "System History Active" : "Personal Records"}
+            System History
           </Button>
           {items.some(i => i.userId?.toString() === user?.userId?.toString()) && (
             <Button 

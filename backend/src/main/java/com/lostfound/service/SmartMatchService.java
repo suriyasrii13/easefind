@@ -144,8 +144,8 @@ public class SmartMatchService {
                 
                 combinedReason = reasons.isEmpty() ? "AI comparison" : String.join(", ", reasons);
 
-                // 🚀 FINAL ACCURACY BOOST: 0.75 (75%)
-                if (confidenceScore >= 0.75 || textScore > 0.9 || nameSimilarity > 0.95) {
+                // 🚀 FINAL ACCURACY BOOST: 0.60 (60%)
+                if (confidenceScore >= 0.60 || textScore > 0.8 || nameSimilarity > 0.8) {
                     isMatch = true;
                     // Boost confidence if names match perfectly
                     if (lostName.equals(foundName)) {
@@ -155,7 +155,7 @@ public class SmartMatchService {
             }
         } catch (Exception e) {
             // Fallback to purely name-based similarity if AI is offline
-            if (nameSimilarity > 0.7) {
+            if (nameSimilarity > 0.5) {
                 isMatch = true;
                 confidenceScore = nameSimilarity;
                 combinedReason = "Textual similarity match";
@@ -172,7 +172,24 @@ public class SmartMatchService {
         if (s1.contains(s2) || s2.contains(s1)) {
             return (double) Math.min(s1.length(), s2.length()) / Math.max(s1.length(), s2.length()) * 0.9;
         }
-        return 0.0; // Simplify for now, could use Levenshtein
+        
+        // Token overlap similarity
+        Set<String> words1 = new HashSet<>(Arrays.asList(s1.split("\\s+")));
+        Set<String> words2 = new HashSet<>(Arrays.asList(s2.split("\\s+")));
+        
+        // Remove common stopwords to improve accuracy
+        List<String> stopWords = Arrays.asList("a", "an", "the", "with", "in", "on", "at", "to", "for", "of", "and", "is", "my", "lost", "found");
+        words1.removeAll(stopWords);
+        words2.removeAll(stopWords);
+        
+        Set<String> intersection = new HashSet<>(words1);
+        intersection.retainAll(words2);
+        
+        if (!intersection.isEmpty()) {
+            double overlap = (double) intersection.size() / Math.min(words1.size(), words2.size());
+            return overlap * 0.8; // e.g. 1 shared word out of 2 = 0.5 * 0.8 = 0.4
+        }
+        return 0.0;
     }
 
     private void saveMatchAndNotify(LostItem lost, FoundItem found, double confidence, String reason) {
