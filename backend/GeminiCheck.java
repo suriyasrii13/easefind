@@ -5,7 +5,7 @@ import java.net.URL;
 
 public class GeminiCheck {
     public static void main(String[] args) {
-        String apiKey = "AIzaSyDKHhVCEfhtHMnMEVHVanfg7skS2PFK5D4";
+        String apiKey = "YOUR_GEMINI_API_KEY_HERE";
         try {
             System.out.println("Checking Gemini API connection...");
             URL url = new URL("https://generativelanguage.googleapis.com/v1beta/models?key=" + apiKey);

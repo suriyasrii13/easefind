@@ -6,7 +6,7 @@ import java.net.URL;
 
 public class TestGemini {
     public static void main(String[] args) throws Exception {
-        String apiKey = "AIzaSyDKHhVCEfhtHMnMEVHVanfg7skS2PFK5D4";
+        String apiKey = "YOUR_GEMINI_API_KEY_HERE";
         URL url = new URL("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + apiKey);
         HttpURLConnection con = (HttpURLConnection) url.openConnection();
         con.setRequestMethod("POST");
