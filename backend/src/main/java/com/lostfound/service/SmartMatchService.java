@@ -116,9 +116,10 @@ public class SmartMatchService {
             File lostImage = (lost.getImagePath() != null) ? new File(UPLOAD_DIR + lost.getImagePath()) : null;
             File foundImage = (found.getImagePath() != null) ? new File(UPLOAD_DIR + found.getImagePath()) : null;
 
-            // 🐌 ARTIFICIAL DELAY: Wait 4.5 seconds to bypass the 15 Requests/Min Free Tier limit
+            // 🐌 ARTIFICIAL DELAY: Wait 10 seconds to bypass the 15 Requests/Min Free Tier limit
+            // We use 10s (6 RPM) to leave plenty of quota (9 RPM) for the user to click "Parse" manually!
             try {
-                Thread.sleep(4500);
+                Thread.sleep(10000);
             } catch (InterruptedException ie) {
                 Thread.currentThread().interrupt();
             }
