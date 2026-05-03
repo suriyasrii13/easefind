@@ -87,7 +87,7 @@ public class SmartMatchService {
         }
     }
 
-    private void performMatchingLogic(LostItem lost, FoundItem found) {
+    private synchronized void performMatchingLogic(LostItem lost, FoundItem found) {
         // --- NULL CHECKS ---
         if (lost == null || found == null) return;
         if (lost.getUser() == null || found.getFinder() == null) {
