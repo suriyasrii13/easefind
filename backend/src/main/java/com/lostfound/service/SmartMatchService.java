@@ -116,6 +116,13 @@ public class SmartMatchService {
             File lostImage = (lost.getImagePath() != null) ? new File(UPLOAD_DIR + lost.getImagePath()) : null;
             File foundImage = (found.getImagePath() != null) ? new File(UPLOAD_DIR + found.getImagePath()) : null;
 
+            // 🐌 ARTIFICIAL DELAY: Wait 4.5 seconds to bypass the 15 Requests/Min Free Tier limit
+            try {
+                Thread.sleep(4500);
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+            }
+
             String jsonResponse = aiService.callAI(
                 lostImage, 
                 foundImage, 
