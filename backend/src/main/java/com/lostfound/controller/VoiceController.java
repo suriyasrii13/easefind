@@ -44,7 +44,7 @@ public class VoiceController {
             } else if (errorMsg != null && errorMsg.contains("401")) {
                 suggestion = "Invalid API Key. Please check your GEMINI_API_KEY environment variable.";
             } else if (errorMsg != null && errorMsg.contains("429")) {
-                suggestion = "API Rate limit exceeded. Please wait a moment and try again.";
+                suggestion = "API Rate limit exceeded. Please wait for a minute or try later after 60 seconds.";
             }
 
             return ResponseEntity.status(500).body(Map.of(
