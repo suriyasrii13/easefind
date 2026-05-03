@@ -16,7 +16,7 @@ public class EmailService {
 
     private final WebClient webClient;
     private final String apiKey;
-    private final String fromEmail = "easyfind.ai@gmail.com";
+    private final String fromEmail = "suriyasricse@gmail.com";
 
     public EmailService(@Value("${BREVO_API_KEY:}") String apiKey) {
         this.webClient = WebClient.builder().build();
