@@ -2,7 +2,7 @@ const isLocalhost = window.location.hostname === 'localhost' || window.location.
 const API_URL = import.meta.env.VITE_API_URL || "https://easefind-production.up.railway.app";
 
 export const BASE_URL = `${API_URL}/api`;
-export const SOCKET_URL = API_URL.replace("https://", "wss://").replace("http://", "ws://") + "/ws";
+export const SOCKET_URL = `${API_URL}/ws`;
 export const UPLOADS_URL = `${API_URL}/uploads`;
 
 export const getMatches = async (userId?: string | number) => {
