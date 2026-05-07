@@ -1,10 +1,9 @@
 const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const API_DOMAIN = isLocalhost ? "http://localhost:8080" : "https://easefind-production.up.railway.app";
-const WS_DOMAIN = isLocalhost ? "http://localhost:8080" : "https://easefind-production.up.railway.app";
+const API_URL = import.meta.env.VITE_API_URL || "https://easefind-production.up.railway.app";
 
-export const BASE_URL = `${API_DOMAIN}/api`;
-export const SOCKET_URL = `${WS_DOMAIN}/ws`;
-export const UPLOADS_URL = `${API_DOMAIN}/uploads`;
+export const BASE_URL = `${API_URL}/api`;
+export const SOCKET_URL = API_URL.replace("https://", "wss://").replace("http://", "ws://") + "/ws";
+export const UPLOADS_URL = `${API_URL}/uploads`;
 
 export const getMatches = async (userId?: string | number) => {
   const url = userId ? `${BASE_URL}/match?userId=${userId}` : `${BASE_URL}/match`;
