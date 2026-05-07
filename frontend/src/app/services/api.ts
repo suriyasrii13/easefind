@@ -1,6 +1,6 @@
 const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const API_DOMAIN = isLocalhost ? "http://localhost:8080" : "https://easyfindaimysql-production.up.railway.app";
-const WS_DOMAIN = isLocalhost ? "http://localhost:8080" : "https://easyfindaimysql-production.up.railway.app";
+const API_DOMAIN = isLocalhost ? "http://localhost:8080" : "https://easefind-production.up.railway.app";
+const WS_DOMAIN = isLocalhost ? "http://localhost:8080" : "https://easefind-production.up.railway.app";
 
 export const BASE_URL = `${API_DOMAIN}/api`;
 export const SOCKET_URL = `${WS_DOMAIN}/ws`;
